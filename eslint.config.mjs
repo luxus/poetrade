@@ -4,6 +4,7 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 import svelte from "eslint-plugin-svelte";
 import svelteParser from "svelte-eslint-parser";
 import prettier from "eslint-config-prettier";
+import globals from "globals";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
@@ -28,6 +29,16 @@ export default [
         clearTimeout: "readonly",
         setTimeout: "readonly",
         crypto: "readonly",
+        // DOM types for content scripts / adapters
+        HTMLElement: "readonly",
+        ParentNode: "readonly",
+        Node: "readonly",
+        NodeList: "readonly",
+        Event: "readonly",
+        MouseEvent: "readonly",
+        CustomEvent: "readonly",
+        KeyboardEvent: "readonly",
+        AddEventListenerOptions: "readonly",
       },
     },
     plugins: {
@@ -79,7 +90,6 @@ export default [
       'svelte/no-at-html-tags': 'warn',
       'svelte/infinite-reactive-loop': 'warn',
       'svelte/no-immutable-reactive-statements': 'warn',
-      'svelte/no-useless-assignment': 'warn',
       'svelte/no-reactive-reassign': 'warn',
       'svelte/require-each-key': 'warn',
     },

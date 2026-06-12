@@ -38,14 +38,14 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
   export let onArchiveEvent: () => void
   export let onDeleteEvent: () => void
   export let onFolderDragStart: (
-    event: DragEvent,
-    id: string
+    _event: DragEvent,
+    _id: string
   ) => void = () => {}
   export let onFolderDragEnter: (
-    event: DragEvent,
-    id: string
+    _event: DragEvent,
+    _id: string
   ) => void = () => {}
-  export let onFolderDrop: (event: DragEvent, id: string) => void = () => {}
+  export let onFolderDrop: (_event: DragEvent, _id: string) => void = () => {}
   export let onFolderDragEnd: () => void = () => {}
   export let isFolderDragging = false
   export let isFolderDragOver = false
@@ -123,7 +123,8 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
     trades = []
   }
 
-  const unsubscribeBookmarksChange = bookmarksService.onChange((_event) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 'event' param used via destructuring/optional in body for onChange contract
+  const unsubscribeBookmarksChange = bookmarksService.onChange((event) => {
     if (!folder.id || !event?.tradesChanged || event.folderId !== folder.id) {
       return
     }
