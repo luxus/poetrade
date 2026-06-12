@@ -123,7 +123,7 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
     trades = []
   }
 
-  const unsubscribeBookmarksChange = bookmarksService.onChange((event) => {
+  const unsubscribeBookmarksChange = bookmarksService.onChange((_event) => {
     if (!folder.id || !event?.tradesChanged || event.folderId !== folder.id) {
       return
     }
@@ -481,7 +481,8 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
       title={translate($languageStore, "folder.dragReorder")}
       aria-hidden="true"
       role="button">
-      <span class="action-icon">{@html icons.grip}</span>
+      <span class="action-icon"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html icons.grip}</span>
     </div>
     <button
       type="button"

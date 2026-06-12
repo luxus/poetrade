@@ -143,7 +143,7 @@
         <span class="trade-action-menu-portal__icon" aria-hidden="true">${normalizeIcon(action.icon)}</span>
         <span class="trade-action-menu-portal__label">${action.label}</span>
       `;
-      button.addEventListener("click", (event) => {
+      button.addEventListener("click", (_event) => {
         event.stopPropagation();
         action.handler();
         closeMenu();

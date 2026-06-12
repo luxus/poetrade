@@ -365,7 +365,7 @@ export class ItemResultsService {
   private observerTimer: ReturnType<typeof setTimeout> | null = null;
 
   private startObserving() {
-    const observer = new MutationObserver((_mutations) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+    const observer = new MutationObserver((_mutations) => {  
       if (this.observerTimer) clearTimeout(this.observerTimer);
       this.observerTimer = setTimeout(() => this.enhanceResults(), 100);
     });

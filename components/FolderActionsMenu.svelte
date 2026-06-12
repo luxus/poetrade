@@ -122,7 +122,7 @@
         <span class="folder-action-menu-portal__icon" aria-hidden="true">${normalizeIcon(action.icon)}</span>
         <span class="folder-action-menu-portal__label">${action.label}</span>
       `;
-      button.addEventListener("click", (event) => {
+      button.addEventListener("click", (_event) => {
         event.stopPropagation();
         action.handler();
         closeMenu();
@@ -221,7 +221,8 @@
         on:click|stopPropagation={() => runInlineAction(action.handler)}
       >
         <span class="folder-action-btn__icon" aria-hidden="true">
-          {@html normalizeIcon(action.icon)}
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(action.icon)}
         </span>
       </button>
     {/each}
@@ -237,7 +238,8 @@
         bind:this={triggerRef}
       >
         <span class="folder-action-btn__icon" aria-hidden="true">
-          {@html normalizeIcon(moreIcon)}
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(moreIcon)}
         </span>
       </button>
     {/if}

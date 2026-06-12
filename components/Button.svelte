@@ -17,18 +17,21 @@
 
 {#if href}
   <a {href} target="_blank" rel="noopener" class="button is-{theme} {className}">
-    {#if iconHtml}<span class="icon icon-html">{@html iconHtml}</span>{:else if icon}<span class="icon">{icon}</span>{/if}
+    {#if iconHtml}<span class="icon icon-html"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html iconHtml}</span>{:else if icon}<span class="icon">{icon}</span>{/if}
     {#if label}<span class="label">{label}</span>{/if}
   </a>
 {:else if onFileChange}
   <label class="button is-{theme} {className}">
     <input type="file" class="file-input" accept={fileAccept} on:change={onFileChange} />
-    {#if iconHtml}<span class="icon icon-html">{@html iconHtml}</span>{:else if icon}<span class="icon">{icon}</span>{/if}
+    {#if iconHtml}<span class="icon icon-html"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html iconHtml}</span>{:else if icon}<span class="icon">{icon}</span>{/if}
     {#if label}<span class="label">{label}</span>{/if}
   </label>
 {:else}
   <button type="button" class="button is-{theme} {className}" on:click={handleClick}>
-    {#if iconHtml}<span class="icon icon-html">{@html iconHtml}</span>{:else if icon}<span class="icon">{icon}</span>{/if}
+    {#if iconHtml}<span class="icon icon-html"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html iconHtml}</span>{:else if icon}<span class="icon">{icon}</span>{/if}
     {#if label}<span class="label">{label}</span>{/if}
   </button>
 {/if}

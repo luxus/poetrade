@@ -7,7 +7,8 @@
 
 <div class="alert-message is-{type}" role="status" aria-live="polite">
   <span class="icon">{icon}</span>
-  <span class="text">{@html message}</span>
+  <span class="text"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html message}</span>
 </div>
 
 <style lang="scss">

@@ -27,6 +27,7 @@ export default [
         __dirname: "readonly",
         clearTimeout: "readonly",
         setTimeout: "readonly",
+        crypto: "readonly",
       },
     },
     plugins: {
@@ -34,9 +35,8 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }], // Strict in lib/ (see below); contents/ has unavoidable Vue hacks per AGENTS.md
+      "@typescript-eslint/no-explicit-any": "error", // Enforced strictly (see AGENTS.md). Only minimal per-line disables in contents/filter-panel.ts for the unavoidable PoE site Vue reverse-engineering.
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "no-undef": "off",
     },
   },
 
@@ -51,12 +51,28 @@ export default [
         project: "./tsconfig.json",
         extraFileExtensions: [".svelte"],
       },
+      globals: {
+        // Hardcoded browser + extension globals (strict mode - no broad rule disables)
+        window: "readonly",
+        document: "readonly",
+        console: "readonly",
+        navigator: "readonly",
+        location: "readonly",
+        history: "readonly",
+        localStorage: "readonly",
+        sessionStorage: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        requestAnimationFrame: "readonly",
+        cancelAnimationFrame: "readonly",
+        chrome: "readonly",
+        fetch: "readonly",
+      },
     },
     rules: {
-      "svelte/require-each-key": "warn",
-      "svelte/no-at-html-tags": "warn", // intentional for dynamic icon markup in menus
-      "svelte/infinite-reactive-loop": "warn",
-      "svelte/prefer-svelte-reactivity": "warn", // Date/Map used in some places for non-reactive data (icons, etc.)
+      // Svelte recommended rules kept as errors. Code will be fixed instead of disabled.
     },
   },
 
@@ -76,12 +92,6 @@ export default [
     ],
   },
 
-  // Content scripts and UI components run in browser context with DOM + chrome globals
-  {
-    files: ["contents/**/*", "entrypoints/**/*", "components/**/*.svelte", "components/**/*.ts"],
-    rules: {
-      "no-undef": "off",
-      "@typescript-eslint/no-unsafe-function-type": "off", // unavoidable in Vue hack layer (contents/filter-panel)
-    },
-  },
+  // Ensure browser + extension globals for content/UI code so no-undef can stay on.
+  // We deliberately do NOT turn rules off broadly per contributor request.
 ];

@@ -63,7 +63,7 @@
       <div class="section-title">- {translate($languageStore, "finer.modifiers")} -</div>
       
       <div class="modifiers-list">
-        {#each listModifiers as mod}
+        {#each listModifiers as mod (mod.name)}
           <div class="finer-global-btn">
             <span class="mod-name">{translate($languageStore, mod.key)}</span>
             <button class="action-btn minus" on:click={() => handleAction('global-minus', mod.types, mod.prefix)}>-</button>

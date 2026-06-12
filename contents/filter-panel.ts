@@ -8,27 +8,29 @@ export const initFilterPanel = () => {
   // ---------- helpers ----------
   const $ = (sel: string, root = document) => root.querySelector(sel);
   const $$ = (sel: string, root = document) => Array.from(root.querySelectorAll(sel));
-  const on = (type: string, selector: string, handler: Function, opts?: any) => {
-    document.addEventListener(type, (e: any) => {
-      const el = e.target.closest(selector);
+  type Handler = (e: Event, el: HTMLElement) => void;
+
+  const on = (type: string, selector: string, handler: Handler, opts?: AddEventListenerOptions) => {
+    document.addEventListener(type, (e: Event) => {
+      const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
       if (!el) return;
       handler.call(el, e, el);
     }, opts);
   };
-  const onEnter = (selector: string, handler: Function) => {
-    document.addEventListener('mouseover', (e: any) => {
-      const el = e.target.closest(selector);
+  const onEnter = (selector: string, handler: Handler) => {
+    document.addEventListener('mouseover', (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
       if (!el) return;
-      const rt = e.relatedTarget;
+      const rt = e.relatedTarget as Node | null;
       if (rt && (rt === el || el.contains(rt))) return;
       handler.call(el, e, el);
     });
   };
-  const onLeave = (selector: string, handler: Function) => {
-    document.addEventListener('mouseout', (e: any) => {
-      const el = e.target.closest(selector);
+  const onLeave = (selector: string, handler: Handler) => {
+    document.addEventListener('mouseout', (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
       if (!el) return;
-      const rt = e.relatedTarget;
+      const rt = e.relatedTarget as Node | null;
       if (rt && (rt === el || el.contains(rt))) return;
       handler.call(el, e, el);
     });

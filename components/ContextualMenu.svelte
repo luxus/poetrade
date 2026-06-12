@@ -46,7 +46,7 @@
     transition:fade={{ duration: 200 }}
     on:click|stopPropagation
   >
-    {#each items as item}
+    {#each items as item (item.id)}
       {#if item.href}
         <a href={item.href} class="menu-item" target="_blank" on:click={() => onItemClick(item)}>
           {item.label}

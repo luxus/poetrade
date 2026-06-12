@@ -26,7 +26,7 @@ jobs:
         run: npm run typecheck
 
       - name: Lint
-        run: npm run lint -- --max-warnings=100   # Threshold after initial cleanup pass. Further reductions as code is modernized.
+        run: npm run lint -- --max-warnings=0   # Strict after pre-merge cleanup. All errors fixed in code (minimal per-line documented disables only for unavoidable icon/@html and Vue hack per AGENTS.md).
 
       - name: Build (Chrome + Firefox)
         run: npm run build
