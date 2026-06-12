@@ -21,6 +21,7 @@
     "package:chrome": "npm run zip:chrome",
     "package:firefox": "npm run zip:firefox",
     "package": "npm run version:bump && npm run package:chrome && npm run package:firefox",
+    "typecheck": "tsc --noEmit",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

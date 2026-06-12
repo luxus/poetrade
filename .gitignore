@@ -39,4 +39,9 @@ dist/
 keys.json
 
 # typescript
-.tsbuildinfo
+*.tsbuildinfo
+tsconfig*.tsbuildinfo
+
+# temporary build / video artifacts
+tmp/
+tmp_video_frames/
