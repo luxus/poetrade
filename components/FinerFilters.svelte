@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dispatchFinerAction } from "../lib/finer-action-bus";
   import { languageStore, translate } from "../lib/services/i18n";
   const listModifiers = [
     {
@@ -37,13 +38,7 @@
   let collapsed = true; // start collapsed
 
   function handleAction(action: 'global-plus' | 'global-minus', types: string[], prefix: string) {
-    document.dispatchEvent(new CustomEvent('krox-finer-action', {
-      detail: {
-        action,
-        types: types.join(','),
-        prefix
-      }
-    }));
+    dispatchFinerAction({ action, types: types.join(','), prefix });
   }
 </script>
 

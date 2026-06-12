@@ -149,6 +149,12 @@ export function findStatFilterGroup(filterType: 'and' | 'not'): VueComponent | u
   return groups.find((g) => g.index !== 0) ?? groups.find((g) => g.index === 0) ?? groups[0];
 }
 
+/** Global preset panel uses the primary AND group (index === 0), per legacy addPseudoMods. */
+export function findGlobalPresetAndGroup(): VueComponent | undefined {
+  const groups = getItemSearchGroups('and');
+  return groups.find((g) => g.index === 0) ?? groups[0];
+}
+
 /** PoE1-style: push into the primary stat-filter group and save. */
 export function addStatToFilterGroup(
   hash: string,
@@ -220,7 +226,7 @@ export function applyGlobalPresetViaVue(
   const app = getTradeApp();
   if (!app) return false;
 
-  const ISG = getItemSearchGroups('and').find((g) => g.index === 0);
+  const ISG = findGlobalPresetAndGroup();
   if (!ISG?.filters || !ISG.selectFilter || !ISG.updateFilter || !ISG.removeFilter) return false;
 
   let reload = false;
@@ -251,6 +257,7 @@ export function applyGlobalPresetViaVue(
   if (reload) {
     app.save(true);
     document.querySelector<HTMLElement>('.btn.search-btn')?.click();
+    getItemResultsPanel()?.search?.();
   }
 
   return reload;

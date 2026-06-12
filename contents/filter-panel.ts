@@ -1,3 +1,4 @@
+import { onFinerAction } from "../lib/finer-action-bus";
 import { poeTradeAdapter } from "../lib/site-adapter/poe-trade-adapter";
 
 /**
@@ -33,18 +34,14 @@ export const initFilterPanel = () => {
       <span class="btn-finer add" data-action="add-filter"  title="add this mod as an AND filter (require in results)">+</span>
     </span>`);
 
-  // Preset list lives in FinerFilters.svelte (the UI side). The global actions are delegated via events to adapter.
+  // Preset list lives in FinerFilters.svelte (isolated world). postMessage bridge reaches MAIN world here.
 
-  // Bridge for the Svelte preset buttons in the sidebar
-  document.addEventListener('krox-finer-action', async (e: Event) => {
-    const d = (e as CustomEvent).detail;
-    if (!d) return;
-    if (d.action === 'global-plus' || d.action === 'global-minus') {
-      const isAdd = d.action === 'global-plus';
-      const types = (d.types || '').split(',').filter(Boolean);
-      const prefix = d.prefix || '';
-      await poeTradeAdapter.applyGlobalPresetAction(types, prefix, isAdd);
-    }
+  onFinerAction(async (d) => {
+    if (d.action !== 'global-plus' && d.action !== 'global-minus') return;
+    const isAdd = d.action === 'global-plus';
+    const types = (d.types || '').split(',').filter(Boolean);
+    const prefix = d.prefix || '';
+    await poeTradeAdapter.applyGlobalPresetAction(types, prefix, isAdd);
   });
 
   // ---------- result mod decoration & button injection (ultra thin - all site logic in adapter) ----------

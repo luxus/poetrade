@@ -95,12 +95,7 @@ export class PoE1SiteStrategy implements ISiteStrategy {
 
   async applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void> {
     if (!applyGlobalPresetViaVue(types, prefix, isAdd, (key) => this.getStatHashForKey(key))) {
-      // Legacy bridge fallback if Vue path unavailable
-      document.dispatchEvent(
-        new CustomEvent('krox-finer-action', {
-          detail: { action: isAdd ? 'global-plus' : 'global-minus', types: types.join(','), prefix },
-        }),
-      );
+      console.warn('[PoE1Strategy] global preset action failed — window.app or AND filter group unavailable');
     }
   }
 
