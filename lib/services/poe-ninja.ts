@@ -96,13 +96,13 @@ export class PoeNinjaService {
       throw new Error("Extension context invalidated");
     }
 
-    let response: PoeNinjaCurrenciesPayload | null = null;
+    let response: PoeNinjaCurrenciesPayload | null = null; // eslint-disable-line no-useless-assignment
 
     try {
       response = await chrome.runtime.sendMessage({ query: "poe-ninja", resource: uri });
     } catch (error) {
       if (isExtensionContextInvalidatedError(error)) {
-        throw new Error("Extension context invalidated");
+        throw new Error("Extension context invalidated", { cause: error });
       }
 
       throw error;
@@ -166,7 +166,7 @@ export class PoeNinjaService {
       throw new Error("Extension context invalidated");
     }
 
-    let response: OfficialTradeExchangePayload | null = null;
+    let response: OfficialTradeExchangePayload | null = null; // eslint-disable-line no-useless-assignment
 
     try {
       response = await chrome.runtime.sendMessage({
@@ -176,7 +176,7 @@ export class PoeNinjaService {
       });
     } catch (error) {
       if (isExtensionContextInvalidatedError(error)) {
-        throw new Error("Extension context invalidated");
+        throw new Error("Extension context invalidated", { cause: error });
       }
 
       throw error;

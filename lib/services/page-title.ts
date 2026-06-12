@@ -4,7 +4,7 @@ import { tradeLocationService } from "./trade-location";
 
 const WOOP_PREFIX_REGEX = /^\((\d+)\) /;
 const TITLE_MUTATION_THROTTLE_MS = 250;
-const TITLE_RECOVERY_MS = 500;
+const _TITLE_RECOVERY_MS = 500; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 export class PageTitleService {
   private baseSiteTitle: string = "";

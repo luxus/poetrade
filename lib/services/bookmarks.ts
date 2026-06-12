@@ -167,7 +167,7 @@ export class BookmarksService {
   async persistFolder(folder: BookmarksFolderStruct, options?: { moveToEnd?: boolean }): Promise<string> {
     const folders = await this.fetchFolders();
     let updated: BookmarksFolderStruct[];
-    const id = folder.id || uniqueId();
+    const _id = folder.id || uniqueId(); // eslint-disable-line @typescript-eslint/no-unused-vars
 
     if (!folder.id) {
       updated = [...folders, { ...folder, id }];
@@ -189,7 +189,7 @@ export class BookmarksService {
   async persistTrade(trade: BookmarksTradeStruct, folderId: string): Promise<string> {
     const trades = await this.fetchTradesByFolderId(folderId, { force: true });
     let updated: BookmarksTradeStruct[];
-    const id = trade.id || uniqueId();
+    const _id = trade.id || uniqueId(); // eslint-disable-line @typescript-eslint/no-unused-vars
 
     if (!trade.id) {
       updated = [...trades, { ...trade, id }];

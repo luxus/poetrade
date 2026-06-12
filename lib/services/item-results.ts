@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+// import { writable } from "svelte/store"; // no longer used after refactor (kept for reference)
 import { poeNinjaService } from "./poe-ninja";
 import { tradeLocationService } from "./trade-location";
 import { searchPanelService } from "./search-panel";
@@ -311,18 +311,18 @@ export class ItemResultsService {
       container.appendChild(el);
     }
 
-    el.replaceChildren();
-    el.appendChild(this.createTextSpan("bt-equivalent-label", "equivalent:"));
+    el!.replaceChildren();
+    el!.appendChild(this.createTextSpan("bt-equivalent-label", "equivalent:"));
 
     parts.forEach((part) => {
       if ("separator" in part) {
-        el.appendChild(this.createTextSpan("bt-equivalent-separator", "+"));
+        el!.appendChild(this.createTextSpan("bt-equivalent-separator", "+"));
         return;
       }
 
-      el.appendChild(this.createCurrencyFragment(part.amount, part.slug));
+      el!.appendChild(this.createCurrencyFragment(part.amount, part.slug));
     });
-    this.syncEquivalentVisibility(el);
+    this.syncEquivalentVisibility(el!);
   }
 
   private createCurrencyFragment(amount: number | string, slug: string) {
@@ -365,7 +365,7 @@ export class ItemResultsService {
   private observerTimer: ReturnType<typeof setTimeout> | null = null;
 
   private startObserving() {
-    const observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver((_mutations) => { // eslint-disable-line @typescript-eslint/no-unused-vars
       if (this.observerTimer) clearTimeout(this.observerTimer);
       this.observerTimer = setTimeout(() => this.enhanceResults(), 100);
     });
@@ -395,7 +395,6 @@ export class ItemResultsService {
     // Current trade site uses .result-item, but some pages or versions use .row.
     // Re-run equivalent pricing on every visible result because the trade site can recycle DOM nodes between searches.
     const results = document.querySelectorAll(".search-results .result-item, .search-results .row, .result-list .result-item, .row");
-    const newResults = Array.from(results).filter((row) => !row.hasAttribute("bt-enhanced"));
 
     results.forEach((row: Element) => {
       const typedRow = row as HTMLElement;
@@ -419,12 +418,12 @@ export class ItemResultsService {
   private highlightStats(row: HTMLElement) {
     if (this.statNeedles.length === 0) return;
 
-    const mods = row.querySelectorAll(".explicitMod, .pseudoMod, .implicitMod");
-    mods.forEach((mod: HTMLElement) => {
-        const text = mod.textContent || "";
-        if (this.statNeedles.some(n => n.test(text))) {
-            mod.classList.add("bt-highlight-stat-filters");
-        }
+    const mods = row.querySelectorAll<HTMLElement>(".explicitMod, .pseudoMod, .implicitMod");
+    mods.forEach((mod) => {
+      const text = mod.textContent || "";
+      if (this.statNeedles.some(n => n.test(text))) {
+        mod.classList.add("bt-highlight-stat-filters");
+      }
     });
   }
 

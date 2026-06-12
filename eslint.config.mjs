@@ -23,6 +23,10 @@ export default [
         document: "readonly",
         console: "readonly",
         fetch: "readonly",
+        process: "readonly",
+        __dirname: "readonly",
+        clearTimeout: "readonly",
+        setTimeout: "readonly",
       },
     },
     plugins: {
@@ -30,7 +34,7 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "@typescript-eslint/no-explicit-any": "warn", // Will be "error" after cleaning contents/ hacks (see AGENTS.md)
+      "@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }], // Strict in lib/ (see below); contents/ has unavoidable Vue hacks per AGENTS.md
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "no-undef": "off",
     },
@@ -52,6 +56,7 @@ export default [
       "svelte/require-each-key": "warn",
       "svelte/no-at-html-tags": "warn", // intentional for dynamic icon markup in menus
       "svelte/infinite-reactive-loop": "warn",
+      "svelte/prefer-svelte-reactivity": "warn", // Date/Map used in some places for non-reactive data (icons, etc.)
     },
   },
 
@@ -69,5 +74,14 @@ export default [
       "package-lock.json",
       "scripts/", // legacy CJS build helpers; lint focus on lib/ + components/ + contents/
     ],
+  },
+
+  // Content scripts and UI components run in browser context with DOM + chrome globals
+  {
+    files: ["contents/**/*", "entrypoints/**/*", "components/**/*.svelte", "components/**/*.ts"],
+    rules: {
+      "no-undef": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off", // unavoidable in Vue hack layer (contents/filter-panel)
+    },
   },
 ];

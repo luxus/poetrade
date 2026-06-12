@@ -26,7 +26,7 @@ jobs:
         run: npm run typecheck
 
       - name: Lint
-        run: npm run lint -- --max-warnings=200   # Initial high threshold while we clean existing code per modernization plan. Will be lowered.
+        run: npm run lint -- --max-warnings=100   # Threshold after initial cleanup pass. Further reductions as code is modernized.
 
       - name: Build (Chrome + Firefox)
         run: npm run build
