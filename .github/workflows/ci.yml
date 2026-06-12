@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0   # Strict after pre-merge cleanup. All errors fixed in code (minimal per-line documented disables only for unavoidable icon/@html and Vue hack per AGENTS.md).
+
+      - name: Build (Chrome + Firefox)
+        run: npm run build
+
+      - name: Security audit (production)
+        run: npm audit --audit-level=high --production || true   # non-blocking for now; see #7

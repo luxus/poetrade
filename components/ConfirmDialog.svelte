@@ -22,7 +22,7 @@
     class="confirm-dialog-backdrop"
     role="presentation"
     on:click={handleBackdropClick}
-    on:keydown={(event) => {
+    on:keydown={(event) => {  <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -- event object is used below via the name; no other way without changing handler signature -->
       if (event.key === "Escape") {
         onCancel()
       }

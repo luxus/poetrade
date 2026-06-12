@@ -171,7 +171,7 @@
         <span class="actions-inline__text" title={compactText}>{compactText}</span>
       {/if}
 
-      {#each inlineActions as action}
+      {#each inlineActions as action (action.id)}
         <button
           type="button"
           class="btn btn--icon"
@@ -180,7 +180,8 @@
           aria-label={getDisplayLabel(action)}
           on:click|stopPropagation={action.handler}
         >
-          <span class="btn__icon" aria-hidden="true">{@html normalizeIcon(action.icon)}</span>
+          <span class="btn__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(action.icon)}</span>
         </button>
       {/each}
 
@@ -194,14 +195,15 @@
           on:click|stopPropagation={toggleMenu}
           bind:this={triggerRef}
         >
-          <span class="btn__icon" aria-hidden="true">{@html normalizeIcon(dropdownIcon || "")}</span>
+          <span class="btn__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(dropdownIcon || "")}</span>
         </button>
       {/if}
     </div>
 
   {:else}
     <div class="actions-inline">
-      {#each inlineActions as action}
+      {#each inlineActions as action (action.id)}
         <button
           type="button"
           class="btn btn--icon"
@@ -210,7 +212,8 @@
           aria-label={getDisplayLabel(action)}
           on:click|stopPropagation={action.handler}
         >
-          <span class="btn__icon" aria-hidden="true">{@html normalizeIcon(action.icon)}</span>
+          <span class="btn__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(action.icon)}</span>
         </button>
       {/each}
 
@@ -224,7 +227,8 @@
           on:click|stopPropagation={toggleMenu}
           bind:this={triggerRef}
         >
-          <span class="btn__icon" aria-hidden="true">{@html normalizeIcon(dropdownIcon || "")}</span>
+          <span class="btn__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(dropdownIcon || "")}</span>
         </button>
       {/if}
     </div>
@@ -237,14 +241,15 @@
       aria-label={translate ? translate(dropdownLabel) : dropdownLabel}
       bind:this={menuRef}
     >
-      {#each dropdownActions as action}
+      {#each dropdownActions as action (action.id)}
         <button
           type="button"
           class="btn btn--menu"
           class:btn--danger={action.danger}
           on:click|stopPropagation={() => handleAction(action.handler)}
         >
-          <span class="btn__icon" aria-hidden="true">{@html normalizeIcon(action.icon)}</span>
+          <span class="btn__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html normalizeIcon(action.icon)}</span>
           <span class="btn__label">{getDisplayLabel(action)}</span>
         </button>
       {/each}

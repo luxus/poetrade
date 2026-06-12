@@ -13,7 +13,7 @@ export type AppLanguage =
 
 type TranslationValue =
   | string
-  | ((params?: Record<string, string | number>) => string)
+  | ((params: Record<string, string | number>) => string)
 
 const translations = {
   en: {
@@ -1575,7 +1575,7 @@ export const translate = (
   const value = dictionary[key] ?? fallback ?? key
 
   if (typeof value === "function") {
-    return value(params)
+    return value(params ?? {})
   }
 
   return value

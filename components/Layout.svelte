@@ -396,7 +396,8 @@
         data-tutorial="nav-bookmarks"
         on:click={() => currentPage = 'bookmarks'}
     >
-        <span class="nav-item__icon" aria-hidden="true">{@html navIcons.bookmarks}</span>
+        <span class="nav-item__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html navIcons.bookmarks}</span>
         <span class="nav-item__label">{translate($languageStore, "layout.nav.bookmarks")}</span>
     </button>
 
@@ -405,7 +406,8 @@
           class="nav-item {currentPage === 'bulk' ? 'is-active' : ''} {showOnboarding && onboardingHighlightedPage === 'bulk' ? 'is-onboarding-focus' : ''}" 
           on:click={() => currentPage = 'bulk'}
       >
-          <span class="nav-item__icon" aria-hidden="true">{@html navIcons.bulk}</span>
+          <span class="nav-item__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html navIcons.bulk}</span>
           <span class="nav-item__label">{translate($languageStore, "layout.nav.bulk")}</span>
       </button>
     {/if}
@@ -416,7 +418,8 @@
           data-tutorial="nav-history"
           on:click={() => currentPage = 'history'}
       >
-          <span class="nav-item__icon" aria-hidden="true">{@html navIcons.history}</span>
+          <span class="nav-item__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html navIcons.history}</span>
           <span class="nav-item__label">{translate($languageStore, "layout.nav.history")}</span>
       </button>
     {/if}
@@ -427,7 +430,8 @@
         aria-label={translate($languageStore, "layout.nav.settings")}
         on:click={() => currentPage = 'settings'}
     >
-        <span class="nav-item__icon" aria-hidden="true">{@html navIcons.settings}</span>
+        <span class="nav-item__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html navIcons.settings}</span>
         <span class="nav-item__label">{translate($languageStore, "layout.nav.settings")}</span>
     </button>
     <button 
@@ -436,7 +440,8 @@
         aria-label={translate($languageStore, "layout.nav.about")}
         on:click={() => currentPage = 'about'}
     >
-        <span class="nav-item__icon" aria-hidden="true">{@html navIcons.about}</span>
+        <span class="nav-item__icon" aria-hidden="true"><!-- eslint-disable-next-line svelte/no-at-html-tags -- trusted internal icon SVG (lucide-static), never user data (AGENTS.md exception for icon layer) -->
+{@html navIcons.about}</span>
     </button>
   </nav>
 
@@ -482,7 +487,7 @@
   <WelcomeDialog
     open={showWelcome}
     selectedLanguage={welcomeLanguage}
-    onSelectLanguage={(language) => {
+    onSelectLanguage={(language) => {  <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -- param declared for callback contract -->
       welcomeLanguage = language;
     }}
     onConfirm={confirmWelcome} />

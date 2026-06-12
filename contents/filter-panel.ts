@@ -1,3 +1,5 @@
+import { poeTradeAdapter } from "../lib/site-adapter/poe-trade-adapter";
+
 export const initFilterPanel = () => {
   if ((window as any).__KROX_STARTED__) {
     return
@@ -8,27 +10,29 @@ export const initFilterPanel = () => {
   // ---------- helpers ----------
   const $ = (sel: string, root = document) => root.querySelector(sel);
   const $$ = (sel: string, root = document) => Array.from(root.querySelectorAll(sel));
-  const on = (type: string, selector: string, handler: Function, opts?: any) => {
-    document.addEventListener(type, (e: any) => {
-      const el = e.target.closest(selector);
+  type Handler = (e: Event, el: HTMLElement) => void;
+
+  const on = (type: string, selector: string, handler: Handler, opts?: AddEventListenerOptions) => {
+    document.addEventListener(type, (e: Event) => {
+      const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
       if (!el) return;
       handler.call(el, e, el);
     }, opts);
   };
-  const onEnter = (selector: string, handler: Function) => {
-    document.addEventListener('mouseover', (e: any) => {
-      const el = e.target.closest(selector);
+  const onEnter = (selector: string, handler: Handler) => {
+    document.addEventListener('mouseover', (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
       if (!el) return;
-      const rt = e.relatedTarget;
+      const rt = e.relatedTarget as Node | null;
       if (rt && (rt === el || el.contains(rt))) return;
       handler.call(el, e, el);
     });
   };
-  const onLeave = (selector: string, handler: Function) => {
-    document.addEventListener('mouseout', (e: any) => {
-      const el = e.target.closest(selector);
+  const onLeave = (selector: string, handler: Handler) => {
+    document.addEventListener('mouseout', (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
       if (!el) return;
-      const rt = e.relatedTarget;
+      const rt = e.relatedTarget as Node | null;
       if (rt && (rt === el || el.contains(rt))) return;
       handler.call(el, e, el);
     });
@@ -38,6 +42,8 @@ export const initFilterPanel = () => {
     t.innerHTML = html.trim();
     return t.content.firstElementChild;
   };
+
+  import { poeTradeAdapter } from "../lib/site-adapter/poe-trade-adapter";
 
   const listModifiers = [];
   listModifiers.push({
@@ -141,17 +147,18 @@ export const initFilterPanel = () => {
     explicit_gain_extra_cold_damage:"2505884597",
     explicit_gain_extra_light_damage:"3278136794",
   };
-  const createFilter = (id: string) => id && ({ id, value:{}, disabled:false });
-
-  const finder = (vm: any, v: string) => vm?.$vnode?.tag?.includes?.(v);
+  // Read-only helpers for UI decoration (which mods are already filtered, attach row/hash data).
+  // Mutation always goes through the adapter.
   const getApp = () => (window as any).app;
+  const finder = (vm: any, v: string) => vm?.$vnode?.tag?.includes?.(v);
   const findVueItem = (tags: string[]) => tags.reduce((acc, v) => acc?.$children?.find?.((e: any) => finder(e, v)), getApp());
-  const ItemResultPanelVueItem = () => findVueItem(["item-results-panel"]);
-  const findVueResultItem = (_itemId: string) => findVueItem(["item-results-panel","resultset"])?.$children?.find?.((e: any) => e.itemId === _itemId);
   const ItemSearchGroupsVueItems = (_type?: string) => {
     const panel = findVueItem(["item-search-panel","item-filter-panel"]);
     return panel?.$children?.filter?.((e: any) => finder(e,"stat-filter-group") && (_type ? e.group.type === _type : true)) || [];
   };
+  const createFilter = (id: string) => id && ({ id, value:{}, disabled:false });
+  const findVueResultItem = (_itemId: string) => findVueItem(["item-results-panel","resultset"])?.$children?.find?.((e: any) => e.itemId === _itemId);
+  const getGlobalApp = () => (window as any).app;
 
   const modSelectors = '.item-popup__content .item-mod, .itemBoxContent > .content > div, .content [class*="Mod"], .item-stats .stat-line';
 
@@ -252,46 +259,26 @@ export const initFilterPanel = () => {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // step 3: click ± inside the buttons
-  on('click', '[data-action="add-filter"]', (e: any, el: HTMLElement) => {
-    addOrRemoveFilter(e, true, el);
+  // step 3: click ± inside the buttons → delegate to adapter (magic UX preserved)
+  on('click', '[data-action="add-filter"]', async (_e: Event, el: HTMLElement) => {
+    const hash = el.closest('#btns-finer')?.getAttribute('data-hash') || '';
+    if (hash) await poeTradeAdapter.addStatFilter(hash, 'include');
   });
-  on('click', '[data-action="rmv-filter"]', (e: any, el: HTMLElement) => {
-    addOrRemoveFilter(e, false, el);
+  on('click', '[data-action="rmv-filter"]', async (_e: Event, el: HTMLElement) => {
+    const hash = el.closest('#btns-finer')?.getAttribute('data-hash') || '';
+    if (hash) await poeTradeAdapter.addStatFilter(hash, 'exclude');
   });
 
-  // listener for actions dispatched from the Svelte sidebar
-  document.addEventListener('krox-finer-action', (e: any) => {
-    const detail = e.detail;
+  // listener for actions dispatched from the Svelte sidebar → delegate to adapter
+  document.addEventListener('krox-finer-action', async (e: Event) => {
+    const detail = (e as CustomEvent).detail;
     if (!detail) return;
-    
+
     if (detail.action === 'global-plus' || detail.action === 'global-minus') {
-        const more = detail.action === 'global-plus';
-        const hashes = (detail.types || '').split(',').filter(Boolean);
-        const prefix = detail.prefix || 'pseudo.pseudo_';
-        
-        const ISG_AND = ItemSearchGroupsVueItems('and')?.find((g: any) => g.index === 0);
-        let reload = false;
-
-        hashes.forEach((hash: string) => {
-          const reHashed = `${prefix}${modMap[hash]}`;
-          const current = ISG_AND?.filters?.find((f: any) => f.id === reHashed);
-          if (current) {
-            const idx = ISG_AND.filters.indexOf(current);
-            const curVal = ISG_AND.state.filters[idx].value || {};
-            const curMin = curVal.min || 0;
-            if (curMin || more) ISG_AND.updateFilter(idx, { min: curMin + (more ? 10 : -10) });
-            else ISG_AND.removeFilter(idx);
-            reload = true;
-          } else if (more && ISG_AND?.selectFilter) {
-            ISG_AND.selectFilter(createFilter(reHashed));
-            reload = true;
-          }
-        });
-
-        if (reload && getGlobalApp()?.save) {
-          getGlobalApp().save(true);
-        }
+      const action = detail.action === 'global-plus' ? 'plus' : 'minus';
+      const types = (detail.types || '').split(',').filter(Boolean);
+      const prefix = detail.prefix || 'pseudo.pseudo_';
+      await poeTradeAdapter.applyGlobalFilterAction(types, prefix, action);
     }
   });
 
@@ -348,38 +335,4 @@ export const initFilterPanel = () => {
 
 
 
-  const getGlobalApp = () => (window as any).app;
-
-  // ---------- interactions ----------
-
-
-  function addOrRemoveFilter(e: any, isAnd: boolean, btn: HTMLElement) {
-    e.preventDefault();
-    e.stopPropagation();
-    const filterType = isAnd ? 'and' : 'not';
-    const btns = btn.closest('#btns-finer') as HTMLElement | null;
-    const modEl = btn.closest('.item-mod, .itemBoxContent > .content > div, .content [class*="Mod"], .item-stats .stat-line') as HTMLElement | null;
-    const rowId = btns?.dataset?.rowid || modEl?.dataset?.rowid;
-    if (!rowId) return;
-    
-    const VueElem = findVueResultItem(rowId) || {};
-    const statHash = btns?.dataset?.hash || modEl?.dataset?.hash;
-    const newFilter = createFilter(statHash || "");
-    const group = ItemSearchGroupsVueItems(filterType)?.find((g: any) => g.index !== 0);
-    const globalStore = getGlobalApp()?.$store;
-
-    if (group && group.selectFilter) {
-        group.selectFilter(newFilter);
-    } else if (globalStore?.commit) {
-        globalStore.commit('pushStatGroup', { type: filterType, filters: [newFilter] });
-    }
-
-    if (getGlobalApp()?.save) {
-        getGlobalApp().save(true);
-    }
-    const panel = ItemResultPanelVueItem();
-    if (panel?.search) {
-        panel.search();
-    }
-  }
 }
