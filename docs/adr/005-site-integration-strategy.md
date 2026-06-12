@@ -14,7 +14,7 @@ See:
 - `contents/filter-panel.ts`
 - `components/FinerFilters.svelte`
 - `entrypoints/filter-panel.content.ts` (main-world injection)
-- Legacy equivalent in `scripts/bg.js`
+- Legacy equivalent was in `scripts/bg.js` (removed 2026-06-12; logic lives in `lib/site-adapter/`)
 
 The site (especially PoE1) exposes no stable public API for programmatically adding arbitrary stat filters from result items.
 
@@ -87,7 +87,7 @@ At the same time we will **modernize the implementation** with these principles:
 - Update `filter-panel.ts`, `FinerFilters.svelte` etc. to only talk to the adapter.
 - Create PoE2 adapter stub + basic support.
 - Add adapter tests (at least for the public interface).
-- Deprecate/remove direct Vue code from legacy `scripts/`.
+- ~~Deprecate/remove direct Vue code from legacy `scripts/`.~~ Done: `scripts/bg.js` and `scripts/cs.js` removed; use `contents/filter-panel.ts` + `lib/site-adapter/`.
 - Evaluate and implement cleaner strategies (DOM simulation) over time.
 
 ## Alternatives Considered

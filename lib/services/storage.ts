@@ -32,10 +32,10 @@ export class StorageService {
     if (!payload) return null;
 
     const { expiresAt, value } = payload;
-    if (!expiresAt) return value;
+    if (!expiresAt) return value as T;
 
     if (new Date().getTime() > new Date(expiresAt).getTime()) return null;
-    return value;
+    return value as T;
   }
 
   private formatKey(key: string, league: string | null) {

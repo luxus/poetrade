@@ -76,6 +76,7 @@ assets/              Branding assets and imported media
 components/          Svelte UI components and panel pages
 contents/            Shared content-script logic and mounted Svelte app
 lib/services/        Bookmarks, trade tracking, settings, result enhancements, poe.ninja
+lib/site-adapter/    PoE trade-site integration (Finer Filters magic, ADR-005)
 lib/styles/          Base and enhancement styles for the site and sidebar
 lib/types/           Shared TypeScript models
 lib/utilities/       Small helpers for URLs, IDs, clipboard, dates, and parsing

@@ -15,7 +15,7 @@ It is **not** a replacement for the trade site. It is an enhancement layer.
 - **BookmarksFolder / BookmarksTrade**: User-saved searches live in folders. Folders and trades have stable IDs, support archive, reorder (drag or buttons), duplicate, rename, and completion toggle.
 - **Export/Import format versioning**: Current is v4 (Base64 + JSON with versioned location string). Legacy v1–v3 must continue to deserialize for user backups. See `bookmarks.ts` serialize/deserialize.
 - **History**: Automatically recorded visited searches (per version/league).
-- **Finer Filters / main-world injection**: The most brittle part. We hook into the site's Vue app (`window.app`, children traversal) via `contents/filter-panel.ts` to allow adding/excluding stats directly from result hovers. This is intentional reverse-engineering because there is no official API/hook.
+- **Finer Filters / main-world injection**: The most brittle part. `contents/filter-panel.ts` is a thin orchestrator (observers, button templates, click delegation). All site knowledge lives in `lib/site-adapter/` (Strategy pattern per ADR-005): PoE1 uses encapsulated Vue poking; PoE2 uses the same path when `window.app` is present. Intentional reverse-engineering — no official API/hook.
 - **Result enhancements**: Equivalent pricing (chaos/divine via poe.ninja or official exchange), stat highlighting, max-socket warnings (PoE1 only).
 - **Active tab coordination**: The extension tries to keep one "active" PoE trade tab so reopening a bookmark updates the existing tab instead of spawning many.
 - **Ephemeral poe.ninja / exchange cache**: Stored with TTL in chrome.storage.local, keyed by league.
@@ -37,7 +37,7 @@ It is **not** a replacement for the trade site. It is an enhancement layer.
 - Heavy test coverage on the DOM-observer / Vue-hack layers (contract + manual verification + the pure service logic is the priority).
 
 ## Maintenance Hotspots (where slop is most dangerous)
-- `contents/filter-panel.ts` + `components/FinerFilters.svelte` (Vue internals)
+- `lib/site-adapter/` + `contents/filter-panel.ts` + `components/FinerFilters.svelte`
 - `lib/services/item-results.ts` and `bulk-sellers.ts` (MutationObserver + fragile selectors on `.result-item`, price containers, etc.)
 - `background.ts` (the two proxy message types)
 - Any code that touches `chrome.storage` key formats or export strings

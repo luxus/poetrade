@@ -141,14 +141,28 @@ export const initFilterPanel = () => {
     setTimeout(refreshButtonsForLayout, 220);
   });
 
+  const resolveStatHash = (btn: HTMLElement): string => {
+    const btns = btn.closest('#btns-finer');
+    return (
+      btns?.getAttribute('data-hash')
+      || (btn.closest('[data-hash]') as HTMLElement | null)?.dataset.hash
+      || (btns?.closest('.item-mod, [class*="Mod"]') as HTMLElement | null)?.dataset.hash
+      || ''
+    );
+  };
+
   on('click', '[data-action="add-filter"]', async (_e, el) => {
-    const hash = el.closest('#btns-finer')?.getAttribute('data-hash') || '';
-    if (hash) await poeTradeAdapter.addStatFilter(hash, 'include');
+    const btns = el.closest('#btns-finer');
+    const hash = resolveStatHash(el);
+    const rowId = btns?.getAttribute('data-rowid') || undefined;
+    if (hash) await poeTradeAdapter.addStatFilter(hash, 'include', rowId);
   });
 
   on('click', '[data-action="rmv-filter"]', async (_e, el) => {
-    const hash = el.closest('#btns-finer')?.getAttribute('data-hash') || '';
-    if (hash) await poeTradeAdapter.addStatFilter(hash, 'exclude');
+    const btns = el.closest('#btns-finer');
+    const hash = resolveStatHash(el);
+    const rowId = btns?.getAttribute('data-rowid') || undefined;
+    if (hash) await poeTradeAdapter.addStatFilter(hash, 'exclude', rowId);
   });
 
   // ---------- small quality-of-life: auto ~ prefix on native search fields ----------

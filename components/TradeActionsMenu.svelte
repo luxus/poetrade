@@ -4,6 +4,7 @@
   import { settings, type BookmarkTradeActionId } from "~lib/services/settings";
   import type { BookmarksTradeStruct } from "~lib/types/bookmarks";
   import { normalizeIcon } from "~lib/utilities/icons";
+  import TrustedHtml from "./TrustedHtml.svelte";
 
   import editIcon from "lucide-static/icons/pencil.svg?raw";
   import replaceIcon from "lucide-static/icons/refresh-cw.svg?raw";
@@ -246,7 +247,7 @@
         on:click|stopPropagation={() => runInlineAction(action.handler)}
       >
         <span class="trade-action-btn__icon" aria-hidden="true">
-          {@html normalizeIcon(action.icon)}
+          <TrustedHtml html={normalizeIcon(action.icon)} />
         </span>
       </button>
     {/each}
@@ -262,7 +263,7 @@
         bind:this={triggerRef}
       >
         <span class="trade-action-btn__icon" aria-hidden="true">
-          {@html normalizeIcon(moreIcon)}
+          <TrustedHtml html={normalizeIcon(moreIcon)} />
         </span>
       </button>
     {/if}

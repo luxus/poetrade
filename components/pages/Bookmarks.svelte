@@ -18,6 +18,7 @@
   import Button from "../Button.svelte";
   import ConfirmDialog from "../ConfirmDialog.svelte";
   import LoadingContainer from "../LoadingContainer.svelte";
+  import TrustedHtml from "../TrustedHtml.svelte";
 
   const EXPANDED_FOLDERS_STORAGE_KEY = "bookmark-folders-expanded";
 
@@ -53,8 +54,8 @@
   let toolbarRepairTimeouts: number[] = [];
   let toolbarRepairAttempts = 0;
 
-  $: currentLocation = tradeLocationService.locationStore;
-  $: currentVersion = $currentLocation.version;
+  const locationStore = tradeLocationService.locationStore;
+  $: currentVersion = $locationStore.version;
   $: versionFolders = $bookmarksService.filter(
     (folder) => folder.version === currentVersion
   );
@@ -78,16 +79,6 @@
       expandedFolderIds = nextExpandedFolderIds;
     }
   }
-  $: if (tutorialTargetFolderId && !expandedFolderIds.includes(tutorialTargetFolderId)) {
-    expandedFolderIds = [...expandedFolderIds, tutorialTargetFolderId];
-  }
-  $: if (expandedFoldersStorageKey && loadedExpandedStateKey !== expandedFoldersStorageKey) {
-    loadExpandedState(expandedFoldersStorageKey);
-  }
-  $: if (loadedExpandedStateKey === expandedFoldersStorageKey) {
-    persistExpandedState(expandedFoldersStorageKey, expandedFolderIds);
-  }
-
   const loadExpandedState = (storageKey: string) => {
     const raw = storageService.getLocalValue(storageKey);
 
@@ -104,6 +95,16 @@
   const persistExpandedState = (storageKey: string, folderIds: string[]) => {
     storageService.setLocalValue(storageKey, JSON.stringify(folderIds));
   };
+
+  $: if (tutorialTargetFolderId && !expandedFolderIds.includes(tutorialTargetFolderId)) {
+    expandedFolderIds = [...expandedFolderIds, tutorialTargetFolderId];
+  }
+  $: if (expandedFoldersStorageKey && loadedExpandedStateKey !== expandedFoldersStorageKey) {
+    loadExpandedState(expandedFoldersStorageKey);
+  }
+  $: if (loadedExpandedStateKey === expandedFoldersStorageKey) {
+    persistExpandedState(expandedFoldersStorageKey, expandedFolderIds);
+  }
 
   const toggleExpansion = (id: string) => {
     if (expandedFolderIds.includes(id)) {
@@ -319,7 +320,7 @@
         <div class="toolbar-row">
           <div class="toolbar-actions toolbar-actions--primary">
             <button class="toolbar-button" data-tutorial="new-folder" type="button" title={translate($languageStore, "bookmarks.toolbar.newFolderTitle")} aria-label={translate($languageStore, "bookmarks.toolbar.newFolderTitle")} on:click={createFolder}>
-              <span class="toolbar-icon" aria-hidden="true">{@html toolbarIcons.newFolder}</span>
+              <span class="toolbar-icon" aria-hidden="true"><TrustedHtml html={toolbarIcons.newFolder} /></span>
               <span class="toolbar-label">{translate($languageStore, "bookmarks.toolbar.new")}</span>
             </button>
             <button
@@ -331,7 +332,7 @@
               on:click={() => isImportingText = !isImportingText}
             >
               <span class="toolbar-icon" aria-hidden="true">
-                {@html isImportingText ? toolbarIcons.cancel : toolbarIcons.import}
+                <TrustedHtml html={isImportingText ? toolbarIcons.cancel : toolbarIcons.import} />
               </span>
               <span class="toolbar-label">{isImportingText ? translate($languageStore, "bookmarks.toolbar.cancel") : translate($languageStore, "bookmarks.toolbar.import")}</span>
             </button>
@@ -339,7 +340,7 @@
 
           <div class="toolbar-actions toolbar-actions--secondary">
             <button class="toolbar-button" type="button" title={translate($languageStore, "bookmarks.toolbar.collapseAll")} aria-label={translate($languageStore, "bookmarks.toolbar.collapseAll")} on:click={collapseAll}>
-              <span class="toolbar-icon" aria-hidden="true">{@html toolbarIcons.collapse}</span>
+              <span class="toolbar-icon" aria-hidden="true"><TrustedHtml html={toolbarIcons.collapse} /></span>
               <span class="toolbar-label">{translate($languageStore, "bookmarks.toolbar.collapse")}</span>
             </button>
             <button
@@ -351,7 +352,7 @@
               on:click={() => showArchived = !showArchived}
             >
               <span class="toolbar-icon" aria-hidden="true">
-                {@html showArchived ? toolbarIcons.active : toolbarIcons.archive}
+                <TrustedHtml html={showArchived ? toolbarIcons.active : toolbarIcons.archive} />
               </span>
               <span class="toolbar-label">{showArchived ? translate($languageStore, "bookmarks.toolbar.active") : translate($languageStore, "bookmarks.toolbar.archive")}</span>
             </button>
@@ -408,7 +409,8 @@
       {:else}
         {#each displayedFolders as folder (folder.id)}
           <div class="folder-shell" animate:flip={{ duration: 180 }}>
-            <BookmarkFolder 
+            {#key folder.id}
+            <BookmarkFolder
                 {folder} 
                 isExpanded={expandedFolderIds.includes(folder.id || "")}
                 isTutorialSaveTarget={tutorialStep === "save-search" && folder.id === tutorialTargetFolderId}
@@ -426,6 +428,7 @@
                 isFolderDragging={draggedFolderId === folder.id}
                 isFolderDragOver={dragOverFolderId === folder.id}
             />
+            {/key}
           </div>
         {/each}
       {/if}

@@ -1,7 +1,7 @@
 <script lang="ts">
 import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
   import { flip } from "svelte/animate"
-  import { onDestroy, tick } from "svelte"
+  import { afterUpdate, onDestroy, tick } from "svelte"
   import { slide } from "svelte/transition"
 
   import {
@@ -34,7 +34,7 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
 
   export let folder: BookmarksFolderStruct
   export let isExpanded = false
-  export let onToggleExpansion: (id: string) => void
+  export let onToggleExpansion: (_folderId: string) => void
   export let onArchiveEvent: () => void
   export let onDeleteEvent: () => void
   export let onFolderDragStart: (
@@ -58,22 +58,12 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
   let hasLoadedTrades = false
   let isDuplicating = false
   let tradePendingDelete: BookmarksTradeStruct | null = null
-  let currentFolderId: string | null = folder.id || null
   let loadRequestId = 0
 
   $: isArchived = !!folder.archivedAt
   $: if (startInEditMode && !editingFolder) {
     startEditingFolder()
     onStartInEditModeHandled()
-  }
-  $: if ((folder.id || null) !== currentFolderId) {
-    currentFolderId = folder.id || null
-    trades = []
-    hasLoadedTrades = false
-    isLoading = false
-  }
-  $: if (isExpanded && !hasLoadedTrades && !isLoading) {
-    void loadTrades()
   }
   const loadTrades = async (force = false) => {
     if (!folder.id) return
@@ -104,6 +94,12 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
     }
   }
 
+  afterUpdate(() => {
+    if (isExpanded && folder.id && !hasLoadedTrades && !isLoading) {
+      void loadTrades()
+    }
+  })
+
   const refreshTrades = async () => {
     hasLoadedTrades = false
     await loadTrades(true)
@@ -123,7 +119,6 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
     trades = []
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 'event' param used via destructuring/optional in body for onChange contract
   const unsubscribeBookmarksChange = bookmarksService.onChange((event) => {
     if (!folder.id || !event?.tradesChanged || event.folderId !== folder.id) {
       return
@@ -209,23 +204,7 @@ import gripVerticalIcon from "lucide-static/icons/grip-vertical.svg?raw"
     tradePendingDelete = null
   }
 
-  const duplicateTrade = async (trade: BookmarksTradeStruct) => {
-    if (!folder.id || isDuplicating) return
-    isDuplicating = true
-    try {
-      trades = await bookmarksService.duplicateTrade(trade, folder.id)
-      hasLoadedTrades = true
-      flashMessages.success(
-        translate($languageStore, "folder.duplicatedTrade", {
-          title: trade.title
-        })
-      )
-    } catch {
-      flashMessages.alert(translate($languageStore, "folder.duplicateTradeError"))
-    } finally {
-      isDuplicating = false
-    }
-  }
+
 
   let draggedIndex: number | null = null
   let dragOverIndex: number | null = null

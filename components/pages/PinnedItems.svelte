@@ -4,6 +4,7 @@
   import { sendMessageToActiveTradeTab } from "../../lib/services/active-trade-tab";
   import Button from "../Button.svelte";
   import AlertMessage from "../AlertMessage.svelte";
+  import TrustedHtml from "../TrustedHtml.svelte";
 
   const pinnedItems = itemResultsService;
 
@@ -25,12 +26,12 @@
       {#each $pinnedItems as item (item.id)}
         <div class="pinned-item-card">
           <div class="item-content">
-            {@html item.detailsHtml}
+            <TrustedHtml html={item.detailsHtml} />
             <div class="rendered-wrapper">
-              {@html item.renderedHtml}
+              <TrustedHtml html={item.renderedHtml} />
             </div>
             <div class="pricing-wrapper">
-              {@html item.pricingHtml}
+              <TrustedHtml html={item.pricingHtml} />
             </div>
           </div>
           <div class="item-actions">

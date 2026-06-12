@@ -99,7 +99,18 @@ export default [
         fetch: "readonly",
       },
     },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
+      // Base no-unused-vars does not honor `_` prefixes in TS callback types; use TS rule instead.
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ],
+      // Svelte `$:` blocks assign state for the *next* reactive run; base rule false-positives.
+      "no-useless-assignment": "warn",
       // Some Svelte rules are "warn" because they flag intentional patterns:
       // - @html for trusted icons (not user data)
       // - reactive loops in complex tutorial/coachmark logic (existing design)

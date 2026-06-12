@@ -304,8 +304,8 @@
     currentPage = 'bookmarks';
   }
 
-  $: currentLocation = tradeLocationService.locationStore;
-  $: minimizedStorageKey = `${MINIMIZED_STORAGE_KEY}-${$currentLocation.version}`;
+  const locationStore = tradeLocationService.locationStore;
+  $: minimizedStorageKey = `${MINIMIZED_STORAGE_KEY}-${$locationStore.version}`;
   $: if (minimizedStorageKey && loadedMinimizedStateKey !== minimizedStorageKey) {
     loadMinimizedState(minimizedStorageKey);
   }

@@ -247,9 +247,10 @@ export class BookmarksService {
     };
     const newFolderId = await this.persistFolder(newFolder);
     const trades = await this.fetchTradesByFolderId(folder.id);
-    const duplicatedTrades = trades.map(trade => {
-      const { id, ...tradeWithoutId } = trade;
-      return { ...tradeWithoutId, id: undefined };
+    const duplicatedTrades = trades.map((trade) => {
+      const copy = { ...trade };
+      copy.id = undefined;
+      return copy;
     });
     await this.persistTrades(duplicatedTrades, newFolderId);
     await this.refresh();

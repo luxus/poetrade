@@ -37,9 +37,12 @@ export class PoeTradeSiteAdapter {
   prepareAndDecorateModForFinerButtons(mod: HTMLElement): void { this.strategy.prepareAndDecorateModForFinerButtons(mod); }
   attachFilterButtons(mod: HTMLElement, buttonsElement: HTMLElement): void { this.strategy.attachFilterButtons(mod, buttonsElement); }
   scanVisibleMods(root?: ParentNode): void { this.strategy.scanVisibleMods(root); }
-  async addStatFilter(hash: string, mode: 'include' | 'exclude' = 'include'): Promise<boolean> {
-    if (this.isPoE2()) return this.strategy.addStatFilter(hash, mode);  // PoE2 impl
-    return this.strategy.addStatFilter(hash, mode);
+  async addStatFilter(
+    hash: string,
+    mode: 'include' | 'exclude' = 'include',
+    rowId?: string,
+  ): Promise<boolean> {
+    return this.strategy.addStatFilter(hash, mode, rowId);
   }
   async removeStatFilter(hash: string): Promise<boolean> { return this.strategy.removeStatFilter(hash); }
   async applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void> {

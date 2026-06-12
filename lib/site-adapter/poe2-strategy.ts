@@ -1,52 +1,54 @@
 import { ISiteStrategy } from './site-strategy';
+import { MOD_SELECTORS, attachFilterButtonsToMod, prepareModForButtons } from './mod-decoration';
+import { STAT_HASH_MAP } from './stat-hash-map';
+import {
+  addStatFromResultRow,
+  addStatToFilterGroup,
+  applyGlobalPresetViaVue,
+  getItemSearchGroups,
+  getTradeApp,
+  isStatInFilterGroups,
+  removeStatFromAllGroups,
+} from './vue-filter-helpers';
 
 /**
  * PoE2 Strategy.
- * Focus on clean, non-hacky methods: DOM selectors, event simulation, search input injection.
- * Goal: Same "instant magic" feel for adding filters from results without deep poking if possible.
- * Current: Basic attachment + injection. Evolve toward full magic (tracked in issue #9).
+ * Primary: Vue filter mutation when window.app is present (same trade UI stack as PoE1).
+ * Fallback: DOM scrape for "already filtered" state; graceful no-op if site internals unavailable.
  */
 export class PoE2SiteStrategy implements ISiteStrategy {
-  private readonly modSelectors = '.result-item .item-mod, .item-stats .stat-line, [class*="mod"], .result .mod';  // Approximate for PoE2; refine with live testing
-
   getModSelectors(): string {
-    return this.modSelectors;
+    return MOD_SELECTORS;
   }
 
   getStatHashForKey(key: string): string | undefined {
-    // PoE2 hashes may differ; for now fall back or map if known.
-    // For presets, we can use the key directly or improve.
-    return key;  // Placeholder
+    return STAT_HASH_MAP[key];
   }
 
   hasSiteApp(): boolean {
-    return false;  // PoE2 doesn't use the same window.app typically
+    return !!getTradeApp();
+  }
+
+  getRowId(mod: HTMLElement): string {
+    const row = mod.closest('[data-id]') as HTMLElement | null;
+    return row?.getAttribute('data-id') || row?.id || mod.dataset.rowid || '';
   }
 
   prepareModForButtons(mod: HTMLElement): void {
-    // PoE2: attach data for clicks
-    const hash = mod.dataset.hash || this.extractHashFromMod(mod);
-    if (hash) mod.dataset.hash = hash;
-    const rowId = this.getRowId(mod);
-    if (rowId) mod.dataset.rowid = rowId;
-  }
-
-  private extractHashFromMod(mod: HTMLElement): string {
-    // PoE2 may have data-hash or in text/attributes differently.
-    const sEl = mod.querySelector('.lc.s') as HTMLElement;
-    const fieldVal = sEl?.dataset?.field || sEl?.getAttribute('data-field') || mod.dataset.hash || '';
-    return fieldVal.startsWith('stat.') ? fieldVal.slice(5) : fieldVal;
+    prepareModForButtons(mod);
   }
 
   decorateModForFiner(mod: HTMLElement): void {
-    // Genius clean way for PoE2: use scraped current filters (no poking).
-    const hash = mod.dataset.hash || this.extractHashFromMod(mod);
+    const hash = mod.dataset.hash;
     if (!hash) {
       mod.classList.add('finer-filterable');
       return;
     }
-    const active = this.getCurrentFilterGroups();
-    const isFiltered = active.some((f: any) => f.id === hash || (f.text && f.text.includes(hash.toLowerCase())));  // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    const isFiltered = this.hasSiteApp()
+      ? isStatInFilterGroups(hash)
+      : this.getScrapedActiveFilters().some((f) => f.id === hash);
+
     mod.classList.remove('finer-filtered', 'finer-filterable');
     mod.classList.add(isFiltered ? 'finer-filtered' : 'finer-filterable');
   }
@@ -57,105 +59,63 @@ export class PoE2SiteStrategy implements ISiteStrategy {
   }
 
   attachFilterButtons(mod: HTMLElement, buttonsElement: HTMLElement): void {
-    // Clean and attach, inline where possible for PoE2 compact.
-    const stale = mod.querySelectorAll(':scope > .finer-mod-content, :scope > .finer-mod-actions');
-    stale.forEach((w) => { while (w.firstChild) mod.insertBefore(w.firstChild, w); w.remove(); });
-    if (mod.querySelector('#btns-finer')) return;
-
-    mod.style.overflow = 'visible';
-
-    // Try inline for PoE2 too (adapted from javijec improvements for compact)
-    const host = mod.querySelector('[class*="lc.r"], [class*="mod-text"], .stat-line, [class*="result"]') as HTMLElement | null;
-    const targetHost = host || mod;
-    targetHost.appendChild(buttonsElement);
-
-    // Compact special mods fixed-right (su/pr like)
-    if (host && (host.classList.contains('lc.r.su') || host.classList.contains('lc.r.pr') || host.classList.toString().includes('special'))) {
-      buttonsElement.classList.add('finer-fixed-right');
-    }
+    attachFilterButtonsToMod(mod, buttonsElement);
   }
 
   scanVisibleMods(root: ParentNode = document): void {
-    Array.from(root.querySelectorAll(this.modSelectors) as NodeListOf<HTMLElement>).forEach((mod) => {
-      this.prepareAndDecorateModForFinerButtons(mod);
-    });
+    Array.from(root.querySelectorAll(this.getModSelectors()) as NodeListOf<HTMLElement>).forEach(
+      (mod) => this.prepareAndDecorateModForFinerButtons(mod),
+    );
   }
 
-  async addStatFilter(hash: string, mode: 'include' | 'exclude' = 'include'): Promise<boolean> {
-    // Use clean injection for PoE2 (no deep hack)
-    return this.addViaSearchInjection(hash, mode);
-  }
-
-  private async addViaSearchInjection(hash: string, mode: 'include' | 'exclude'): Promise<boolean> {
-    const inputs = document.querySelectorAll('input[type="text"], input.search, .search-bar input, .search input') as NodeListOf<HTMLInputElement>;
-    const target = Array.from(inputs).find((i) => i.offsetParent !== null) || inputs[0];
-    if (!target) return false;
-
-    const prefix = mode === 'exclude' ? '!' : '~';  // ~ for include, common in trade search
-    const snippet = `${prefix}${hash}`;
-
-    const start = target.selectionStart ?? target.value.length;
-    const end = target.selectionEnd ?? target.value.length;
-    target.value = target.value.slice(0, start) + snippet + target.value.slice(end);
-    target.dispatchEvent(new Event('input', { bubbles: true }));
-    target.focus();
-    target.setSelectionRange(start + snippet.length, start + snippet.length);
-
-    // "Magic" touch for instant feel: trigger the site's search/results update.
-    // This makes the added filter "sofort" affect the results, emulating PoE1 magic cleanly via DOM/events.
-    setTimeout(() => {
-      const searchBtn = document.querySelector('.search-btn, .btn.search-btn, button.search, [class*="search-btn"]') as HTMLElement | null;
-      if (searchBtn) {
-        searchBtn.click();
-      } else {
-        // Fallback: simulate Enter to trigger live search
-        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true });
-        target.dispatchEvent(enterEvent);
-        target.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', bubbles: true }));
-      }
-    }, 30);
-
-    return true;
+  async addStatFilter(
+    hash: string,
+    mode: 'include' | 'exclude' = 'include',
+    rowId?: string,
+  ): Promise<boolean> {
+    if (this.hasSiteApp()) {
+      if (addStatFromResultRow(hash, mode, rowId)) return true;
+      return addStatToFilterGroup(hash, mode);
+    }
+    console.warn('[PoE2Strategy] window.app unavailable — cannot add stat filter');
+    return false;
   }
 
   async removeStatFilter(hash: string): Promise<boolean> {
-    // For PoE2, use injection to "remove" by adding exclude or clearing; use the add logic with exclude for toggle feel.
-    return this.addViaSearchInjection(hash, 'exclude');
+    if (this.hasSiteApp()) return removeStatFromAllGroups(hash);
+    console.warn('[PoE2Strategy] window.app unavailable — cannot remove stat filter');
+    return false;
   }
 
   async applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void> {
-    // For PoE2, cleanly inject each preset via search (no hack).
-    // This makes the global buttons in the sidebar "magic" on PoE2 too.
-    for (const key of types) {
-      const h = this.getStatHashForKey(key) || key;
-      const effectivePrefix = prefix || '';
-      await this.addViaSearchInjection(`${effectivePrefix}${h}`, isAdd ? 'include' : 'exclude');
+    if (!this.hasSiteApp()) {
+      console.warn('[PoE2Strategy] window.app unavailable — global presets require site app');
+      return;
     }
+    applyGlobalPresetViaVue(types, prefix, isAdd, (key) => this.getStatHashForKey(key));
   }
 
   isMagicSupported(): boolean {
-    // For PoE2, we support button attachment + injection.
-    return true;  // DOM based
+    return this.hasSiteApp();
   }
 
   getCurrentFilterGroups(_type?: string): unknown[] {
-    // Clean PoE2 way: scrape visible active filters from the site's filter UI.
-    // This avoids any poking. Matches on text or data for "is this mod already filtered?"
-    const active: any[] = [];  // eslint-disable-line @typescript-eslint/no-explicit-any
-    // Common PoE2 filter display elements (refine as needed)
-    document.querySelectorAll('.filter-list .filter, .search-advanced .filter, [class*="active-filter"], .stat-filter-group .filter-title').forEach((el: Element) => {
-      const text = (el.textContent || '').trim().toLowerCase();
-      const dataId = (el as HTMLElement).dataset?.id || (el as HTMLElement).dataset?.hash || '';
-      if (text || dataId) {
-        active.push({ id: dataId || text, text });
-      }
-    });
-    return active;
+    if (this.hasSiteApp()) return getItemSearchGroups(_type);
+    return this.getScrapedActiveFilters();
   }
 
-  getRowId(mod: HTMLElement): string {
-    // Reuse or PoE2 specific
-    const row = mod.closest('[data-id]') as HTMLElement | null;
-    return row?.getAttribute('data-id') || row?.id || mod.dataset.rowid || '';
+  private getScrapedActiveFilters(): Array<{ id: string; text: string }> {
+    const active: Array<{ id: string; text: string }> = [];
+    document
+      .querySelectorAll(
+        '.filter-list .filter, .search-advanced .filter, [class*="active-filter"], .stat-filter-group .filter-title',
+      )
+      .forEach((el) => {
+        const text = (el.textContent || '').trim().toLowerCase();
+        const htmlEl = el as HTMLElement;
+        const dataId = htmlEl.dataset?.id || htmlEl.dataset?.hash || '';
+        if (text || dataId) active.push({ id: dataId || text, text });
+      });
+    return active;
   }
 }

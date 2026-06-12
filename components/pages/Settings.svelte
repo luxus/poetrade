@@ -6,6 +6,7 @@
   import { settings, type BookmarkTradeActionId, type SidebarSide } from "../../lib/services/settings";
   import { tradeLocationService } from "../../lib/services/trade-location";
   import Button from "../Button.svelte";
+  import TrustedHtml from "../TrustedHtml.svelte";
   import { onDestroy, onMount } from "svelte";
   import flagBR from "../../assets/BR.png?inline";
   import flagDE from "../../assets/DE.png?inline";
@@ -347,7 +348,7 @@
                 on:change={(event) => handleCompactTradeActionInput(event, option.id)}
                 aria-label={translate($languageStore, option.labelKey)}
               />
-              <span class="compact-option__icon" aria-hidden="true">{@html option.icon}</span>
+              <span class="compact-option__icon" aria-hidden="true"><TrustedHtml html={option.icon} /></span>
             </label>
           {/each}
         </div>

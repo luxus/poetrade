@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, tick } from "svelte"
+  import { beforeUpdate, onDestroy, tick } from "svelte"
   import { languageStore, translate } from "../lib/services/i18n"
   import Button from "./Button.svelte"
 
@@ -39,15 +39,13 @@
   ) => void = () => {}
 
   let currentStep = 0
-  let wasOpen = false
-  let coachmarkStyle = ""
-  let highlightStyle = ""
-  let targetFound = false
   let syncInterval: ReturnType<typeof setInterval> | null = null
   let lastScrolledStepId: OnboardingStepId | null = null
   let layerElement: HTMLDivElement | null = null
   let coachmarkElement: HTMLElement | null = null
-  let coachmarkPlacement: "above" | "below" = "below"
+  let highlightElement: HTMLDivElement | null = null
+  let openSnapshot = open
+  let stepSnapshot = 0
 
   $: allSteps = [
     {
@@ -206,13 +204,15 @@
     }
   ]
 
-  $: steps = showHistoryStep
-    ? allSteps
-    : allSteps.filter((step) => step.id !== "history")
-
-  $: if (!showEquivalentStep) {
-    steps = steps.filter((step) => step.id !== "settings-equivalent")
-  }
+  $: visibleSteps = (() => {
+    let next = showHistoryStep
+      ? allSteps
+      : allSteps.filter((step) => step.id !== "history")
+    if (!showEquivalentStep) {
+      next = next.filter((step) => step.id !== "settings-equivalent")
+    }
+    return next
+  })()
 
   const getQueryRoot = (): Document | ShadowRoot => {
     const root = layerElement?.getRootNode()
@@ -236,24 +236,31 @@
       : null
   }
 
-  const updatePosition = () => {
-    if (!open || !steps.length) return
+  const resetCoachmarkVisuals = () => {
+    highlightElement?.style.setProperty("display", "none")
+    coachmarkElement?.classList.add("is-hidden")
+    coachmarkElement?.style.removeProperty("left")
+    coachmarkElement?.style.removeProperty("top")
+    coachmarkElement?.style.removeProperty("width")
+    coachmarkElement?.style.removeProperty("--pointer-left")
+  }
 
-    const step = steps[currentStep]
+  const updatePosition = () => {
+    if (!open || !visibleSteps.length) return
+
+    const step = visibleSteps[currentStep]
     const container = getContainer()
     const target = getStepTarget(step)
 
-    if (!container || !target) {
-      targetFound = false
-      highlightStyle = ""
-      coachmarkStyle = ""
+    if (!container || !target || !coachmarkElement) {
+      resetCoachmarkVisuals()
       return
     }
 
     const containerRect = container.getBoundingClientRect()
     const targetRect = target.getBoundingClientRect()
     const cardWidth = Math.min(272, Math.max(220, containerRect.width - 20))
-    const cardHeight = coachmarkElement?.offsetHeight || 172
+    const cardHeight = coachmarkElement.offsetHeight || 172
     const gap = 12
     const relativeTop = targetRect.top - containerRect.top
     const relativeLeft = targetRect.left - containerRect.left
@@ -285,20 +292,20 @@
       Math.max(22, targetCenterX - left)
     )
 
-    targetFound = true
-    coachmarkPlacement = placeBelow ? "below" : "above"
-    highlightStyle = [
-      `left: ${Math.max(6, relativeLeft - 4)}px`,
-      `top: ${Math.max(6, relativeTop - 4)}px`,
-      `width: ${targetRect.width + 8}px`,
-      `height: ${targetRect.height + 8}px`
-    ].join("; ")
-    coachmarkStyle = [
-      `left: ${left}px`,
-      `top: ${top}px`,
-      `width: ${cardWidth}px`,
-      `--pointer-left: ${pointerLeft}px`
-    ].join("; ")
+    coachmarkElement.classList.remove("is-hidden")
+    coachmarkElement.classList.toggle("is-above", !placeBelow)
+    coachmarkElement.style.left = `${left}px`
+    coachmarkElement.style.top = `${top}px`
+    coachmarkElement.style.width = `${cardWidth}px`
+    coachmarkElement.style.setProperty("--pointer-left", `${pointerLeft}px`)
+
+    if (highlightElement) {
+      highlightElement.style.display = "block"
+      highlightElement.style.left = `${Math.max(6, relativeLeft - 4)}px`
+      highlightElement.style.top = `${Math.max(6, relativeTop - 4)}px`
+      highlightElement.style.width = `${targetRect.width + 8}px`
+      highlightElement.style.height = `${targetRect.height + 8}px`
+    }
 
     if (lastScrolledStepId !== step.id) {
       target.scrollIntoView({ block: "nearest", inline: "nearest" })
@@ -328,44 +335,49 @@
   }
 
   const nextStep = () => {
-    if (currentStep >= steps.length - 1) {
+    if (currentStep >= visibleSteps.length - 1) {
       onClose()
       return
     }
 
     currentStep += 1
     lastScrolledStepId = null
+    void tick().then(() => updatePosition())
   }
 
   const previousStep = () => {
     if (currentStep === 0) return
     currentStep -= 1
     lastScrolledStepId = null
+    void tick().then(() => updatePosition())
   }
 
   const handleResize = () => {
     updatePosition()
   }
 
-  $: if (open !== wasOpen) {
-    if (open) {
-      currentStep = 0
+  beforeUpdate(() => {
+    if (open !== openSnapshot) {
+      if (open) {
+        currentStep = 0
+        lastScrolledStepId = null
+        void startSync()
+      } else {
+        stopSync()
+        resetCoachmarkVisuals()
+        lastScrolledStepId = null
+      }
+      openSnapshot = open
+      stepSnapshot = currentStep
+    } else if (open && currentStep !== stepSnapshot) {
       lastScrolledStepId = null
-      void startSync()
-    } else {
-      stopSync()
-      targetFound = false
-      coachmarkStyle = ""
-      highlightStyle = ""
-      lastScrolledStepId = null
+      stepSnapshot = currentStep
+      void tick().then(() => updatePosition())
     }
+  })
 
-    wasOpen = open
-  }
-
-  $: if (open && steps[currentStep]) {
-    onStepChange(steps[currentStep].page, steps[currentStep].id)
-    void startSync()
+  $: if (open && visibleSteps[currentStep]) {
+    onStepChange(visibleSteps[currentStep].page, visibleSteps[currentStep].id)
   }
 
   onDestroy(() => {
@@ -375,27 +387,22 @@
 
 <svelte:window on:resize={handleResize} on:scroll={handleResize} />
 
-{#if open && steps[currentStep]}
+{#if open && visibleSteps[currentStep]}
   <div class="onboarding-layer" bind:this={layerElement} role="presentation">
-    {#if targetFound}
-      <div class="onboarding-highlight" style={highlightStyle}></div>
-    {/if}
+    <div class="onboarding-highlight" bind:this={highlightElement}></div>
 
     <div
       bind:this={coachmarkElement}
-      class="onboarding-coachmark"
-      class:is-above={coachmarkPlacement === "above"}
-      class:is-hidden={!targetFound}
-      style={coachmarkStyle}
+      class="onboarding-coachmark is-hidden"
       role="dialog"
       aria-modal="false"
       aria-labelledby="onboarding-title">
       <div class="onboarding-coachmark__header">
         <div>
           <span class="onboarding-coachmark__eyebrow">
-            {steps[currentStep].eyebrow}
+            {visibleSteps[currentStep].eyebrow}
           </span>
-          <h2 id="onboarding-title">{steps[currentStep].title}</h2>
+          <h2 id="onboarding-title">{visibleSteps[currentStep].title}</h2>
         </div>
         <button
           type="button"
@@ -404,10 +411,10 @@
           on:click={onClose}>×</button>
       </div>
 
-      <p class="onboarding-coachmark__body">{steps[currentStep].body}</p>
+      <p class="onboarding-coachmark__body">{visibleSteps[currentStep].body}</p>
 
       <ol class="onboarding-steps">
-        {#each steps[currentStep].steps as step, index (index)}
+        {#each visibleSteps[currentStep].steps as step, index (index)}
           <li class="onboarding-step-row">
             <span class="onboarding-step-index">{index + 1}</span>
             <span class="onboarding-step-copy">{step}</span>
@@ -419,7 +426,7 @@
         <span class="onboarding-progress">
           {translate($languageStore, "onboarding.stepCounter", {
             current: currentStep + 1,
-            total: steps.length
+            total: visibleSteps.length
           })}
         </span>
         <div class="onboarding-actions">
@@ -434,7 +441,7 @@
               onClick={previousStep} />
           {/if}
           <Button
-            label={currentStep === steps.length - 1
+            label={currentStep === visibleSteps.length - 1
               ? translate($languageStore, "onboarding.finish")
               : translate($languageStore, "onboarding.next")}
             theme="gold"
@@ -456,6 +463,7 @@
   }
 
   .onboarding-highlight {
+    display: none;
     position: absolute;
     border-radius: 10px;
     border: 1px solid rgba($gold, 0.62);

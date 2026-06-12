@@ -8,7 +8,7 @@
 
   export let open = false
   export let selectedLanguage: AppLanguage = "en"
-  export let onSelectLanguage: (language: AppLanguage) => void = () => {}
+  export let onSelectLanguage: (_language: AppLanguage) => void = () => {}
   export let onConfirm: () => void = () => {}
 
   const languages: Array<{ code: AppLanguage; label: string }> = [

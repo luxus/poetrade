@@ -50,8 +50,6 @@
   const getGroupLabel = (date: Date) => {
     const now = new Date();
     const today = startOfDay(now);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
     const entryDay = startOfDay(date);
     const diffDays = Math.round((today.getTime() - entryDay.getTime()) / 86400000);
 
@@ -101,12 +99,12 @@
 
   const groupHistoryEntries = (entries: TradeLocationHistoryStruct[]) => {
     const groups: HistoryGroup[] = [];
-    const groupedMap = new Map<string, HistoryGroup>();
+    const groupedMap: Record<string, HistoryGroup> = {};
 
     for (const entry of entries) {
       const date = new Date(entry.createdAt);
       const groupMeta = getGroupLabel(date);
-      const existing = groupedMap.get(groupMeta.id);
+      const existing = groupedMap[groupMeta.id];
 
       if (existing) {
         existing.entries.push(entry);
@@ -119,7 +117,7 @@
         entries: [entry]
       };
 
-      groupedMap.set(groupMeta.id, nextGroup);
+      groupedMap[groupMeta.id] = nextGroup;
       groups.push(nextGroup);
     }
 
