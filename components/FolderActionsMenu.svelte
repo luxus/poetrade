@@ -122,7 +122,7 @@
         <span class="folder-action-menu-portal__icon" aria-hidden="true">${normalizeIcon(action.icon)}</span>
         <span class="folder-action-menu-portal__label">${action.label}</span>
       `;
-      button.addEventListener("click", (_event) => {
+      button.addEventListener("click", (event) => {
         event.stopPropagation();
         action.handler();
         closeMenu();

@@ -487,7 +487,7 @@
   <WelcomeDialog
     open={showWelcome}
     selectedLanguage={welcomeLanguage}
-    onSelectLanguage={(language) => {  <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -- param declared for callback contract -->
+    onSelectLanguage={(language) => {
       welcomeLanguage = language;
     }}
     onConfirm={confirmWelcome} />

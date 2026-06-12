@@ -138,7 +138,7 @@ export class PoE2SiteStrategy implements ISiteStrategy {
     return true;  // DOM based
   }
 
-  getCurrentFilterGroups(type?: string): any[] {
+  getCurrentFilterGroups(_type?: string): unknown[] {
     // Clean PoE2 way: scrape visible active filters from the site's filter UI.
     // This avoids any poking. Matches on text or data for "is this mod already filtered?"
     const active: any[] = [];

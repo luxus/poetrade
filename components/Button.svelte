@@ -4,7 +4,7 @@
   export let iconHtml: string = "";
   export let href: string = "";
   export let theme: "blue" | "gold" | "red" = "blue";
-  export let onFileChange: ((event: Event) => void) | null = null;
+  export let onFileChange: ((_event: Event) => void) | null = null;
   export let onClick: (() => void) | null = null;
   export let fileAccept: string = "*";
   let className: string = "";

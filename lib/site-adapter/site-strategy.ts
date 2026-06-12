@@ -18,5 +18,5 @@ export interface ISiteStrategy {
   removeStatFilter(hash: string): Promise<boolean>;
   applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void>;
   isMagicSupported(): boolean;
-  getCurrentFilterGroups(type?: string): any[];
+  getCurrentFilterGroups(_type?: string): unknown[];
 }

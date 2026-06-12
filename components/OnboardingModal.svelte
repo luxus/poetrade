@@ -34,8 +34,8 @@
   export let showEquivalentStep = true
   export let onClose: () => void = () => {}
   export let onStepChange: (
-    page: OnboardingPage,
-    stepId: OnboardingStepId
+    _page: OnboardingPage,
+    _stepId: OnboardingStepId
   ) => void = () => {}
 
   let currentStep = 0
@@ -407,7 +407,7 @@
       <p class="onboarding-coachmark__body">{steps[currentStep].body}</p>
 
       <ol class="onboarding-steps">
-        {#each steps[currentStep].steps as step, index}
+        {#each steps[currentStep].steps as step, index (index)}
           <li class="onboarding-step-row">
             <span class="onboarding-step-index">{index + 1}</span>
             <span class="onboarding-step-copy">{step}</span>

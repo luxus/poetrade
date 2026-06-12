@@ -19,7 +19,7 @@
   export let compactVisibleActionIds: ActionId[] | undefined = undefined;
   export let dropdownLabel = "More";
   export let dropdownIcon: string;
-  export let translate: ((key: string) => string) | undefined = undefined;
+  export let translate: ((_key: string) => string) | undefined = undefined;
 
   let triggerRef: HTMLButtonElement;
   let menuRef: HTMLDivElement;

@@ -35,7 +35,7 @@
   </div>
 
   <div class="trade-grid">
-    {#each tradeLinks as link}
+    {#each tradeLinks as link (link.href)}
       <a class="trade-link" href={link.href} target="_blank" rel="noreferrer">
         <span class="trade-link__logo-wrap">
           <img class="trade-link__logo" src={link.logo} alt={translate($languageStore, link.logoAltKey)} />

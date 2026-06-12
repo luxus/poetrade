@@ -46,7 +46,7 @@ export class PoeTradeSiteAdapter {
     return this.strategy.applyGlobalPresetAction(types, prefix, isAdd);
   }
   isMagicSupported(): boolean { return this.strategy.isMagicSupported(); }
-  getCurrentFilterGroups(type?: string): any[] { return this.strategy.getCurrentFilterGroups(type); }
+  getCurrentFilterGroups(_type?: string): unknown[] { return this.strategy.getCurrentFilterGroups(_type); }
 
   // Version switch if needed (e.g. dynamic)
   switchStrategy() {

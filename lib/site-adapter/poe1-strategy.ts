@@ -189,7 +189,7 @@ export class PoE1SiteStrategy implements ISiteStrategy {
     const ISG = this.getItemSearchGroups(filterType).find((g: any) => g.index === 0);
     if (!ISG) return;
     types.forEach((key: string) => {
-      const reHashed = `${prefix}${this.getStatHashForKey(key) || key}`;
+      // const reHashed = `${prefix}${this.getStatHashForKey(key) || key}`;
       // Simplified: use add/remove
       // For full, replicate old logic if needed.
     });
@@ -203,7 +203,7 @@ export class PoE1SiteStrategy implements ISiteStrategy {
     return this.hasSiteApp();  // has getApp in base or here
   }
 
-  getCurrentFilterGroups(type?: string): any[] {
-    return this.getItemSearchGroups(type);
+  getCurrentFilterGroups(_type?: string): unknown[] {
+    return this.getItemSearchGroups(_type);
   }
 }

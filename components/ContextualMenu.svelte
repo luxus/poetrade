@@ -4,11 +4,11 @@
 
   export let items: Array<{ label: string; onClick?: () => void; href?: string }> = [];
   
-  const dispatch = createEventDispatcher();
+  const _dispatch = createEventDispatcher();
   let visible = false;
   let x = 0;
   let y = 0;
-  let menuEl: HTMLElement;
+  let _menuEl: HTMLElement;
 
   const toggle = (e: MouseEvent) => {
     e.stopPropagation();
