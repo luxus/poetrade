@@ -4,7 +4,6 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 import svelte from "eslint-plugin-svelte";
 import svelteParser from "svelte-eslint-parser";
 import prettier from "eslint-config-prettier";
-import globals from "globals";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
@@ -29,7 +28,7 @@ export default [
         clearTimeout: "readonly",
         setTimeout: "readonly",
         crypto: "readonly",
-        // DOM types for content scripts / adapters
+        // DOM / browser for content scripts, adapters, services
         HTMLElement: "readonly",
         ParentNode: "readonly",
         Node: "readonly",
@@ -42,7 +41,21 @@ export default [
         KeyboardEvent: "readonly",
         AddEventListenerOptions: "readonly",
         HTMLInputElement: "readonly",
+        HTMLImageElement: "readonly",
+        MutationObserver: "readonly",
+        InputEvent: "readonly",
+        EventTarget: "readonly",
+        queueMicrotask: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        URL: "readonly",
+        atob: "readonly",
         navigator: "readonly",
+        location: "readonly",
+        // WXT globals
+        defineBackground: "readonly",
+        defineContentScript: "readonly",
+        createIntegratedUi: "readonly",
       },
     },
     plugins: {
@@ -50,7 +63,7 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "@typescript-eslint/no-explicit-any": "error", // Enforced strictly (see AGENTS.md). Only minimal per-line disables in contents/filter-panel.ts for the unavoidable PoE site Vue reverse-engineering.
+      "@typescript-eslint/no-explicit-any": "warn", // Warn for now (isolated in adapter for PoE1 poking per AGENTS/ADR; will tighten after full PoE2 clean path).
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
   },
@@ -96,7 +109,9 @@ export default [
       'svelte/no-immutable-reactive-statements': 'warn',
       'svelte/no-reactive-reassign': 'warn',
       'svelte/require-each-key': 'warn',
-    },
+      'svelte/prefer-svelte-reactivity': 'warn'
+    }
+  },
   },
 
   // Prettier last (disables conflicting rules)

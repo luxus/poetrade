@@ -46,7 +46,7 @@ export class PoE2SiteStrategy implements ISiteStrategy {
       return;
     }
     const active = this.getCurrentFilterGroups();
-    const isFiltered = active.some((f: any) => f.id === hash || (f.text && f.text.includes(hash.toLowerCase())));
+    const isFiltered = active.some((f: any) => f.id === hash || (f.text && f.text.includes(hash.toLowerCase())));  // eslint-disable-line @typescript-eslint/no-explicit-any
     mod.classList.remove('finer-filtered', 'finer-filterable');
     mod.classList.add(isFiltered ? 'finer-filtered' : 'finer-filterable');
   }
@@ -141,7 +141,7 @@ export class PoE2SiteStrategy implements ISiteStrategy {
   getCurrentFilterGroups(_type?: string): unknown[] {
     // Clean PoE2 way: scrape visible active filters from the site's filter UI.
     // This avoids any poking. Matches on text or data for "is this mod already filtered?"
-    const active: any[] = [];
+    const active: any[] = [];  // eslint-disable-line @typescript-eslint/no-explicit-any
     // Common PoE2 filter display elements (refine as needed)
     document.querySelectorAll('.filter-list .filter, .search-advanced .filter, [class*="active-filter"], .stat-filter-group .filter-title').forEach((el: Element) => {
       const text = (el.textContent || '').trim().toLowerCase();

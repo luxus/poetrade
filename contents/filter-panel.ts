@@ -13,15 +13,12 @@ import { poeTradeAdapter } from "../lib/site-adapter/poe-trade-adapter";
  * See lib/site-adapter/poe-trade-adapter.ts and ADR-005.
  */
 export const initFilterPanel = () => {
-  if ((window as any).__KROX_STARTED__) {
+  if ((window as any).__KROX_STARTED__) {  // eslint-disable-line @typescript-eslint/no-explicit-any
     return;
   }
-  (window as any).__KROX_STARTED__ = true;
+  (window as any).__KROX_STARTED__ = true;  // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // ---------- pure DOM helpers (no site knowledge) ----------
-  const $ = (sel: string, root: ParentNode = document) => root.querySelector(sel);
-  const $$ = (sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll(sel));
-
   const h = (html: string) => {
     const t = document.createElement('template');
     t.innerHTML = html.trim();

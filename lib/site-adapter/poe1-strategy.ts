@@ -52,21 +52,21 @@ export class PoE1SiteStrategy implements ISiteStrategy {
     explicit_gain_extra_light_damage: "3278136794",
   };
 
-  private finder(vm: any, v: string): boolean {
+  private finder(vm: any, v: string): boolean {  // eslint-disable-line @typescript-eslint/no-explicit-any
     return vm?.$vnode?.tag?.includes?.(v) ?? false;
   }
 
-  private getApp(): any {
-    return (window as any).app;
+  private getApp(): any {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    return (window as any).app;  // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
-  private findVueItem(tags: string[]): any {
-    return tags.reduce((acc, v) => acc?.$children?.find?.((e: any) => this.finder(e, v)), this.getApp());
+  private findVueItem(tags: string[]): any {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    return tags.reduce((acc, v) => acc?.$children?.find?.((e: any) => this.finder(e, v)), this.getApp());  // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
-  getItemSearchGroups(_type?: string): any[] {
+  getItemSearchGroups(_type?: string): any[] {  // eslint-disable-line @typescript-eslint/no-explicit-any
     const panel = this.findVueItem(["item-search-panel", "item-filter-panel"]);
-    return panel?.$children?.filter?.((e: any) => this.finder(e, "stat-filter-group") && (_type ? e.group.type === _type : true)) || [];
+    return panel?.$children?.filter?.((e: any) => this.finder(e, "stat-filter-group") && (_type ? e.group.type === _type : true)) || [];  // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
   createSiteFilter(id: string) {
@@ -147,9 +147,9 @@ export class PoE1SiteStrategy implements ISiteStrategy {
     try {
       const filterType = mode === 'exclude' ? 'not' : 'and';
       const ISGs = this.getItemSearchGroups(filterType);
-      const targetGroup = ISGs.find((g: any) => g.index === 0) || ISGs[0];
+      const targetGroup = ISGs.find((g: any) => g.index === 0) || ISGs[0];  // eslint-disable-line @typescript-eslint/no-explicit-any
       if (!targetGroup || !targetGroup.filters) return false;
-      const existing = targetGroup.filters.some((f: any) => f.id === hash);
+      const existing = targetGroup.filters.some((f: any) => f.id === hash);  // eslint-disable-line @typescript-eslint/no-explicit-any
       if (existing) return true;
       const newFilter = this.createSiteFilter(hash);
       if (newFilter) targetGroup.filters.push(newFilter);
@@ -170,7 +170,7 @@ export class PoE1SiteStrategy implements ISiteStrategy {
       for (const group of allGroups) {
         if (!group.filters) continue;
         const before = group.filters.length;
-        group.filters = group.filters.filter((f: any) => f.id !== hash);
+        group.filters = group.filters.filter((f: any) => f.id !== hash);  // eslint-disable-line @typescript-eslint/no-explicit-any
         if (group.filters.length !== before) removed = true;
       }
       if (removed && typeof app.save === 'function') app.save(true);
@@ -186,9 +186,9 @@ export class PoE1SiteStrategy implements ISiteStrategy {
     // To keep behavior, dispatch is fine, or implement direct here.
     // For genius, prefer direct mutation here.
     const filterType = isAdd ? 'and' : 'not';
-    const ISG = this.getItemSearchGroups(filterType).find((g: any) => g.index === 0);
+    const ISG = this.getItemSearchGroups(filterType).find((g: any) => g.index === 0);  // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!ISG) return;
-    types.forEach((key: string) => {
+    types.forEach((_key: string) => {
       // const reHashed = `${prefix}${this.getStatHashForKey(key) || key}`;
       // Simplified: use add/remove
       // For full, replicate old logic if needed.

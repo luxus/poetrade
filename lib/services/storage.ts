@@ -1,7 +1,7 @@
 import { hasValidExtensionContext, isExtensionContextInvalidatedError } from "../utilities/extension-context";
 
 interface StoragePayload {
-  value: any;
+  value: unknown;
   expiresAt: string | null;
 }
 
@@ -13,14 +13,14 @@ export class StorageService {
     return this.instance;
   }
 
-  async setValue(key: string, value: any, league: string | null = null) {
+  async setValue(key: string, value: unknown, league: string | null = null) {
     return this.write(this.formatKey(key, league), {
       expiresAt: null,
       value,
     });
   }
 
-  async setEphemeralValue(key: string, value: any, expirationDate: Date, league: string | null = null) {
+  async setEphemeralValue(key: string, value: unknown, expirationDate: Date, league: string | null = null) {
     return this.write(this.formatKey(key, league), {
       expiresAt: expirationDate.toUTCString(),
       value,

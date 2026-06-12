@@ -24,8 +24,8 @@ export class SearchPanelService {
   getStats() {
     const stats: string[] = [];
 
-    document.querySelectorAll(this.STATS_SELECTOR).forEach((item: any) => {
-      let stat = item.innerText;
+    document.querySelectorAll(this.STATS_SELECTOR).forEach((item: Element) => {
+      let stat = (item as HTMLElement).innerText;
       stat = stat.trim().toLowerCase().replace(/^pseudo /, "");
       stats.push(stat);
     });

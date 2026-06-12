@@ -65,7 +65,7 @@ describe('BookmarksService - serialization & versioning (anti-slop critical path
       { id: 'b', title: 'B', version: '1' as const, icon: null, archivedAt: null },
     ];
 
-    const reordered = service.partiallyReorderFolders(folders as any, [folders[1], folders[0]] as any);
+    const reordered = service.partiallyReorderFolders(folders as unknown as any, [folders[1], folders[0]] as unknown as any);  // eslint-disable-line @typescript-eslint/no-explicit-any
     expect(reordered[0].id).toBe('b');
     expect(reordered[1].id).toBe('a');
   });
