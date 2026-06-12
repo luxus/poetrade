@@ -219,7 +219,10 @@ function startKroxScriptMainWorld() {
   };
   const createFilter = (id) => id && ({ id, value:{}, disabled:false });
 
-  // NOTE: These finder helpers are brittle across Vue versions; consider replacing
+  // NOTE: Legacy - all site interaction (Vue poking etc.) has moved to lib/site-adapter/ (Strategy pattern, ADR-005).
+// This file's filter-related code is deprecated/historical. Do not add new hacks here. Use the adapter.
+// PoE1 magic is in PoE1Strategy, PoE2 in PoE2Strategy (DOM focus).
+// Brittle across Vue versions; consider replacing (per old note).
   const finder = (vm, v) => vm?.$vnode?.tag?.includes?.(v);
   const findVueItem = (tags) => tags.reduce((acc, v) => acc?.$children?.find?.(e => finder(e, v)), window.app);
   const ItemResultPanelVueItem = () => findVueItem(["item-results-panel"]);
