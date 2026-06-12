@@ -202,4 +202,8 @@ export class PoE1SiteStrategy implements ISiteStrategy {
   isMagicSupported(): boolean {
     return this.hasSiteApp();  // has getApp in base or here
   }
+
+  getCurrentFilterGroups(type?: string): any[] {
+    return this.getItemSearchGroups(type);
+  }
 }

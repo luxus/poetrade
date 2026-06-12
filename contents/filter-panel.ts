@@ -129,13 +129,7 @@ export const initFilterPanel = () => {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Hook to layout changes if layout buttons exist (from javijec improvement)
-  on('click', '.layout-btn, [class*="layout"]', () => {
-    refreshButtonsForLayout();
-    setTimeout(refreshButtonsForLayout, 220);
-  });
-
-  // Click handlers on the injected +/- buttons → pure delegation to adapter
+  // Click handlers definition (must be before use)
   const on = (type: string, selector: string, handler: (e: Event, el: HTMLElement) => void) => {
     document.addEventListener(type, (e: Event) => {
       const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
@@ -143,6 +137,12 @@ export const initFilterPanel = () => {
       handler(e, el);
     });
   };
+
+  // Hook to layout changes if layout buttons exist (from javijec improvement)
+  on('click', '.layout-btn, [class*="layout"]', () => {
+    refreshButtonsForLayout();
+    setTimeout(refreshButtonsForLayout, 220);
+  });
 
   on('click', '[data-action="add-filter"]', async (_e, el) => {
     const hash = el.closest('#btns-finer')?.getAttribute('data-hash') || '';

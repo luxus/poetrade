@@ -23,11 +23,6 @@ export class PoE2SiteStrategy implements ISiteStrategy {
     return false;  // PoE2 doesn't use the same window.app typically
   }
 
-  getRowId(mod: HTMLElement): string {
-    const row = mod.closest('[data-id]') as HTMLElement | null;
-    return row?.getAttribute('data-id') || row?.id || mod.dataset.rowid || '';
-  }
-
   prepareModForButtons(mod: HTMLElement): void {
     // PoE2: attach data for clicks
     const hash = mod.dataset.hash || this.extractHashFromMod(mod);

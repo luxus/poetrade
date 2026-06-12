@@ -14,9 +14,9 @@ export interface ISiteStrategy {
   prepareAndDecorateModForFinerButtons(mod: HTMLElement): void;
   attachFilterButtons(mod: HTMLElement, buttonsElement: HTMLElement): void;
   scanVisibleMods(root?: ParentNode): void;
-  async addStatFilter(hash: string, mode?: 'include' | 'exclude'): Promise<boolean>;
-  async removeStatFilter(hash: string): Promise<boolean>;
-  async applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void>;
+  addStatFilter(hash: string, mode?: 'include' | 'exclude'): Promise<boolean>;
+  removeStatFilter(hash: string): Promise<boolean>;
+  applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void>;
   isMagicSupported(): boolean;
   getCurrentFilterGroups(type?: string): any[];
 }
