@@ -270,8 +270,8 @@ export const initFilterPanel = () => {
   });
 
   // listener for actions dispatched from the Svelte sidebar → delegate to adapter
-  document.addEventListener('krox-finer-action', async (e: CustomEvent) => {
-    const detail = e.detail;
+  document.addEventListener('krox-finer-action', async (e: Event) => {
+    const detail = (e as CustomEvent).detail;
     if (!detail) return;
 
     if (detail.action === 'global-plus' || detail.action === 'global-minus') {
