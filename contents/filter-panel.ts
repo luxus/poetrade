@@ -117,36 +117,29 @@ export const initFilterPanel = () => {
 
     if (mod.querySelector('#btns-finer')) return;
 
-    mod.style.position = 'relative';
     mod.style.overflow = 'visible';
 
     // Let adapter attach any data it needs (hash, rowid)
     poeTradeAdapter.prepareModForButtons(mod);
 
-    mod.appendChild(btns);
+    // javijec improvement: place buttons inline in the mod text for better compact support
+    const host = mod.querySelector('.lc.r.su, .lc.r.pr, .lc.r') as HTMLElement | null;
+    (host || mod).appendChild(btns);
+
+    // javijec compact special mods: use fixed-right positioning for .su/.pr
+    if (host && (host.classList.contains('lc.r.su') || host.classList.contains('lc.r.pr'))) {
+      btns.classList.add('finer-fixed-right');
+    }
   };
 
   const decorateAndAttach = (mod: HTMLElement) => {
-    // Adapter does the "is already filtered?" check and class + data work
-    // (it internally uses the current site filter groups)
-    const ISGs = poeTradeAdapter.getCurrentFilterGroups();
-    // We still call the old decorate logic? No — we moved the knowledge.
-    // For now we keep a thin local version that uses adapter data.
-    // TODO next: move full decorateMod into adapter too.
+    // Delegate fully to adapter for site-specific decoration (data, filtered state, classes)
+    poeTradeAdapter.prepareAndDecorateModForFinerButtons(mod);
 
-    const hash = mod.dataset.hash;
-    const isFiltered = hash
-      ? ISGs.some((g: any) => g.filters?.some((f: any) => f.id === hash))
-      : false;
-
-    if (isFiltered) {
-      mod.classList.add('finer-filtered');
-      if (!mod.querySelector('.finer-filtered-overlay')) {
-        const o = filteredOverlay();
-        if (o) mod.appendChild(o);
-      }
-    } else {
-      mod.classList.add('finer-filterable');
+    // Overlay is pure UI concern (green tint for already filtered)
+    if (mod.classList.contains('finer-filtered') && !mod.querySelector('.finer-filtered-overlay')) {
+      const o = filteredOverlay();
+      if (o) mod.appendChild(o);
     }
 
     attachButtons(mod);
@@ -186,6 +179,15 @@ export const initFilterPanel = () => {
   // Initial pass + observer
   scanVisibleMods();
 
+  let layoutRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  const refreshButtonsForLayout = () => {
+    if (layoutRefreshTimer) clearTimeout(layoutRefreshTimer);
+    layoutRefreshTimer = setTimeout(() => {
+      scanVisibleMods();
+      layoutRefreshTimer = null;
+    }, 80);
+  };
+
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       m.addedNodes.forEach((node) => {
@@ -196,8 +198,16 @@ export const initFilterPanel = () => {
         scanVisibleMods(node);
       });
     }
+    // javijec-style refresh after layout-affecting mutations (e.g. our sidebar changes)
+    refreshButtonsForLayout();
   });
   observer.observe(document.body, { childList: true, subtree: true });
+
+  // Hook to layout changes if layout buttons exist (from javijec improvement)
+  on('click', '.layout-btn, [class*="layout"]', () => {
+    refreshButtonsForLayout();
+    setTimeout(refreshButtonsForLayout, 220);
+  });
 
   // Click handlers on the injected +/- buttons → pure delegation to adapter
   const on = (type: string, selector: string, handler: (e: Event, el: HTMLElement) => void) => {

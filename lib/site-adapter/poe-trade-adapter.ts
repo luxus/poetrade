@@ -25,6 +25,10 @@ export class PoeTradeSiteAdapter {
   private readonly POE1_MOD_SELECTORS =
     '.item-popup__content .item-mod, .itemBoxContent > .content > div, .content [class*="Mod"], .item-stats .stat-line';
 
+  // PoE2 result stat selectors (approximate; PoE2 trade UI is different, refine in #9)
+  private readonly POE2_MOD_SELECTORS =
+    '.result-item .item-mod, .item-stats .stat-line, [class*="mod"]';
+
   /**
    * Map from our human/preset keys → site's internal stat hash IDs.
    * These hashes are what the site's filter engine actually uses.
@@ -109,12 +113,16 @@ export class PoeTradeSiteAdapter {
     return !!this.getApp();
   }
 
+  private isPoE2(): boolean {
+    if (typeof location === 'undefined') return false;
+    return location.pathname.includes('/trade2') || location.href.includes('trade2');
+  }
+
   /**
    * Returns the CSS selectors for finding stats on result items for the current site version.
    */
   getModSelectors(): string {
-    // For now always PoE1. PoE2 will return different selectors when implemented.
-    return this.POE1_MOD_SELECTORS;
+    return this.isPoE2() ? this.POE2_MOD_SELECTORS : this.POE1_MOD_SELECTORS;
   }
 
   /**
