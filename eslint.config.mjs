@@ -112,7 +112,6 @@ export default [
       'svelte/prefer-svelte-reactivity': 'warn'
     }
   },
-  },
 
   // Prettier last (disables conflicting rules)
   prettier,
