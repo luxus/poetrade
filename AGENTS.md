@@ -42,11 +42,13 @@ This file takes precedence for any AI-driven or assisted work. Follow it **stric
 - Logging: Use tagged `console.*` or `emitPageDebug` only. Make debug output conditional where possible.
 
 ### Content Scripts & Site Integration (Highest Slop Risk Area)
-- **All DOM interaction and selectors must be centralized** (once the site-adapter layer from the plan exists). Do **not** sprinkle new `querySelector`, MutationObserver, or `innerHTML` across files.
-- Finer Filters / filter-panel.ts and similar Vue-hacking code is extremely brittle. Changes here require extra justification + manual verification on live trade site.
-- Never assume the structure of the official PoE Vue app (`window.app`, `$children`, etc.). Treat it as opaque and version it in comments.
-- Always handle PoE1 (`version === "1"`) vs PoE2 (`"2"`) explicitly. Default to safe/no-op for the other version unless the feature is explicitly dual.
-- Test manually after every change in this area. "It worked on my machine once" is not acceptable.
+- **All site interaction must go through the adapter** (see ADR-005). `lib/site-adapter/` is the single place allowed to contain DOM queries, event simulation, or framework poking (Vue internals on the PoE site).
+- No new direct `window.app`, `$children`, `$vnode`, or raw Vue traversal outside the adapter. This is strictly enforced.
+- Finer Filters (the "instant add filter from results" magic) is a non-negotiable feature. The adapter must preserve the exact current UX quality ("zauber" feel) for PoE1. No regression allowed.
+- The current deep Vue poking is acknowledged technical debt. It lives only inside the adapter as a last-resort strategy for the magic UX. We are committed to reducing reliance on it over time (cleaner DOM simulation preferred).
+- Always handle PoE1 vs PoE2 explicitly. PoE2 is now the primary focus.
+- Any change touching the adapter requires manual verification on live PoE1 **and** PoE2 trade pages.
+- See ADR-005 for the full strategy and migration plan.
 
 ### Tests (Will be mandatory after Phase 1)
 - New logic in `lib/services/`, `lib/utilities/`, or pure data handling **requires** accompanying unit tests (Vitest).
