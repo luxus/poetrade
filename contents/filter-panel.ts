@@ -50,59 +50,24 @@ export const initFilterPanel = () => {
     }
   });
 
-  // ---------- result mod decoration & button injection ----------
-  const modSelectors = poeTradeAdapter.getModSelectors();
-
-  const attachButtons = (mod: HTMLElement) => {
-    const btns = buttonsTemplate();
-    if (!btns) return;
-
-    // Clean previous wrappers (idempotent)
-    const stale = mod.querySelectorAll(':scope > .finer-mod-content, :scope > .finer-mod-actions');
-    stale.forEach((w) => {
-      while (w.firstChild) mod.insertBefore(w.firstChild, w);
-      w.remove();
-    });
-
-    if (mod.querySelector('#btns-finer')) return;
-
-    mod.style.overflow = 'visible';
-
-    // Let adapter attach any data it needs (hash, rowid)
-    poeTradeAdapter.prepareModForButtons(mod);
-
-    // javijec improvement: place buttons inline in the mod text for better compact support
-    const host = mod.querySelector('.lc.r.su, .lc.r.pr, .lc.r') as HTMLElement | null;
-    (host || mod).appendChild(btns);
-
-    // javijec compact special mods: use fixed-right positioning for .su/.pr
-    if (host && (host.classList.contains('lc.r.su') || host.classList.contains('lc.r.pr'))) {
-      btns.classList.add('finer-fixed-right');
-    }
-  };
-
-  const decorateAndAttach = (mod: HTMLElement) => {
-    // Delegate fully to adapter for site-specific decoration (data, filtered state, classes)
-    poeTradeAdapter.prepareAndDecorateModForFinerButtons(mod);
-
-    // Overlay is pure UI concern (green tint for already filtered)
-    if (mod.classList.contains('finer-filtered') && !mod.querySelector('.finer-filtered-overlay')) {
-      const o = filteredOverlay();
-      if (o) mod.appendChild(o);
-    }
-
-    attachButtons(mod);
-  };
-
+  // ---------- result mod decoration & button injection (ultra thin - all site logic in adapter) ----------
   const scanVisibleMods = (root: ParentNode = document) => {
-    Array.from(root.querySelectorAll(modSelectors) as NodeListOf<HTMLElement>).forEach((mod) => {
-      // Let adapter do the hash/row work + it can also decorate if we extend it
-      poeTradeAdapter.prepareModForButtons(mod);
-      decorateAndAttach(mod);
+    poeTradeAdapter.scanVisibleMods(root);
+    // After scan (which prepares/decors), attach buttons using adapter's attach
+    Array.from(root.querySelectorAll(poeTradeAdapter.getModSelectors()) as NodeListOf<HTMLElement>).forEach((mod) => {
+      const btns = buttonsTemplate();
+      if (btns) {
+        poeTradeAdapter.attachFilterButtons(mod, btns);
+        // Overlay for filtered (UI only)
+        if (mod.classList.contains('finer-filtered') && !mod.querySelector('.finer-filtered-overlay')) {
+          const o = filteredOverlay();
+          if (o) mod.appendChild(o);
+        }
+      }
     });
   };
 
-  // Hover a result row → decorate its mods
+  // Hover a result row → let adapter handle decoration, then attach buttons
   const onEnter = (selector: string, handler: (e: Event, el: HTMLElement) => void) => {
     document.addEventListener('mouseover', (e: MouseEvent) => {
       const el = (e.target as HTMLElement | null)?.closest(selector) as HTMLElement | null;
@@ -116,12 +81,22 @@ export const initFilterPanel = () => {
   onEnter('.resultset > .row, .resultset > .result-item, .search-results .result-item, .search-results .row', (e, row) => {
     if (row.classList.contains('finer-processed')) return;
 
-    if (!poeTradeAdapter.hasSiteApp()) {
+    if (!poeTradeAdapter.hasSiteApp() && !poeTradeAdapter.isMagicSupported?.()) {  // adapter may expose
       console.warn('[Krox] Site app not found – PoE2 or major site change?');
     }
 
-    const mods = Array.from(row.querySelectorAll(modSelectors)) as HTMLElement[];
-    mods.forEach(decorateAndAttach);
+    const mods = Array.from(row.querySelectorAll(poeTradeAdapter.getModSelectors()) as NodeListOf<HTMLElement>);
+    mods.forEach((mod) => {
+      poeTradeAdapter.prepareAndDecorateModForFinerButtons(mod);
+      const btns = buttonsTemplate();
+      if (btns) {
+        poeTradeAdapter.attachFilterButtons(mod, btns);
+        if (mod.classList.contains('finer-filtered') && !mod.querySelector('.finer-filtered-overlay')) {
+          const o = filteredOverlay();
+          if (o) mod.appendChild(o);
+        }
+      }
+    });
     row.classList.add('finer-processed');
   });
 
@@ -141,8 +116,10 @@ export const initFilterPanel = () => {
     for (const m of mutations) {
       m.addedNodes.forEach((node) => {
         if (!(node instanceof HTMLElement)) return;
-        if (node.matches?.(modSelectors)) {
-          decorateAndAttach(node);
+        if (node.matches?.(poeTradeAdapter.getModSelectors())) {
+          poeTradeAdapter.prepareAndDecorateModForFinerButtons(node);
+          const btns = buttonsTemplate();
+          if (btns) poeTradeAdapter.attachFilterButtons(node, btns);
         }
         scanVisibleMods(node);
       });
