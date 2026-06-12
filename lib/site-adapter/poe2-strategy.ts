@@ -39,9 +39,16 @@ export class PoE2SiteStrategy implements ISiteStrategy {
   }
 
   decorateModForFiner(mod: HTMLElement): void {
-    // For PoE2, we may not have easy "is filtered" without poking; use class or skip for now.
-    // To keep magic, assume filterable unless we implement state tracking.
-    mod.classList.add('finer-filterable');  // Default; improve with PoE2 filter observation
+    // Genius clean way for PoE2: use scraped current filters (no poking).
+    const hash = mod.dataset.hash || this.extractHashFromMod(mod);
+    if (!hash) {
+      mod.classList.add('finer-filterable');
+      return;
+    }
+    const active = this.getCurrentFilterGroups();
+    const isFiltered = active.some((f: any) => f.id === hash || (f.text && f.text.includes(hash.toLowerCase())));
+    mod.classList.remove('finer-filtered', 'finer-filterable');
+    mod.classList.add(isFiltered ? 'finer-filtered' : 'finer-filterable');
   }
 
   prepareAndDecorateModForFinerButtons(mod: HTMLElement): void {
@@ -57,9 +64,15 @@ export class PoE2SiteStrategy implements ISiteStrategy {
 
     mod.style.overflow = 'visible';
 
-    // Try inline for PoE2 too
-    const host = mod.querySelector('[class*="lc.r"], [class*="mod-text"], .stat-line') as HTMLElement | null;
-    (host || mod).appendChild(buttonsElement);
+    // Try inline for PoE2 too (adapted from javijec improvements for compact)
+    const host = mod.querySelector('[class*="lc.r"], [class*="mod-text"], .stat-line, [class*="result"]') as HTMLElement | null;
+    const targetHost = host || mod;
+    targetHost.appendChild(buttonsElement);
+
+    // Compact special mods fixed-right (su/pr like)
+    if (host && (host.classList.contains('lc.r.su') || host.classList.contains('lc.r.pr') || host.classList.toString().includes('special'))) {
+      buttonsElement.classList.add('finer-fixed-right');
+    }
   }
 
   scanVisibleMods(root: ParentNode = document): void {
@@ -74,32 +87,49 @@ export class PoE2SiteStrategy implements ISiteStrategy {
   }
 
   private async addViaSearchInjection(hash: string, mode: 'include' | 'exclude'): Promise<boolean> {
-    const inputs = document.querySelectorAll('input[type="text"], input.search, .search-bar input') as NodeListOf<HTMLInputElement>;
+    const inputs = document.querySelectorAll('input[type="text"], input.search, .search-bar input, .search input') as NodeListOf<HTMLInputElement>;
     const target = Array.from(inputs).find((i) => i.offsetParent !== null) || inputs[0];
     if (!target) return false;
 
-    const prefix = mode === 'exclude' ? '!' : '';
+    const prefix = mode === 'exclude' ? '!' : '~';  // ~ for include, common in trade search
     const snippet = `${prefix}${hash}`;
+
     const start = target.selectionStart ?? target.value.length;
     const end = target.selectionEnd ?? target.value.length;
     target.value = target.value.slice(0, start) + snippet + target.value.slice(end);
     target.dispatchEvent(new Event('input', { bubbles: true }));
     target.focus();
     target.setSelectionRange(start + snippet.length, start + snippet.length);
+
+    // "Magic" touch for instant feel: trigger the site's search/results update.
+    // This makes the added filter "sofort" affect the results, emulating PoE1 magic cleanly via DOM/events.
+    setTimeout(() => {
+      const searchBtn = document.querySelector('.search-btn, .btn.search-btn, button.search, [class*="search-btn"]') as HTMLElement | null;
+      if (searchBtn) {
+        searchBtn.click();
+      } else {
+        // Fallback: simulate Enter to trigger live search
+        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true });
+        target.dispatchEvent(enterEvent);
+        target.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', bubbles: true }));
+      }
+    }, 30);
+
     return true;
   }
 
   async removeStatFilter(hash: string): Promise<boolean> {
-    // For PoE2, similar injection or clear; for now basic.
-    return this.addViaSearchInjection(hash, 'include');  // Placeholder
+    // For PoE2, use injection to "remove" by adding exclude or clearing; use the add logic with exclude for toggle feel.
+    return this.addViaSearchInjection(hash, 'exclude');
   }
 
   async applyGlobalPresetAction(types: string[], prefix: string, isAdd: boolean): Promise<void> {
-    // For PoE2, inject the presets via search or simulate.
-    // Use the injection for each.
+    // For PoE2, cleanly inject each preset via search (no hack).
+    // This makes the global buttons in the sidebar "magic" on PoE2 too.
     for (const key of types) {
       const h = this.getStatHashForKey(key) || key;
-      await this.addViaSearchInjection(`${prefix}${h}`, isAdd ? 'include' : 'exclude');
+      const effectivePrefix = prefix || '';
+      await this.addViaSearchInjection(`${effectivePrefix}${h}`, isAdd ? 'include' : 'exclude');
     }
   }
 
@@ -109,7 +139,18 @@ export class PoE2SiteStrategy implements ISiteStrategy {
   }
 
   getCurrentFilterGroups(type?: string): any[] {
-    return [];  // PoE2 may not expose easily; implement observation if needed for "is filtered".
+    // Clean PoE2 way: scrape visible active filters from the site's filter UI.
+    // This avoids any poking. Matches on text or data for "is this mod already filtered?"
+    const active: any[] = [];
+    // Common PoE2 filter display elements (refine as needed)
+    document.querySelectorAll('.filter-list .filter, .search-advanced .filter, [class*="active-filter"], .stat-filter-group .filter-title').forEach((el: Element) => {
+      const text = (el.textContent || '').trim().toLowerCase();
+      const dataId = (el as HTMLElement).dataset?.id || (el as HTMLElement).dataset?.hash || '';
+      if (text || dataId) {
+        active.push({ id: dataId || text, text });
+      }
+    });
+    return active;
   }
 
   getRowId(mod: HTMLElement): string {
