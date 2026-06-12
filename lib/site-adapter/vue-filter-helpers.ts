@@ -60,10 +60,68 @@ export function getItemSearchGroups(type?: string): VueComponent[] {
   );
 }
 
+function getResultsetChildren(): VueComponent[] {
+  return findVueItem(['item-results-panel', 'resultset'])?.$children ?? [];
+}
+
 function findVueResultItem(itemId?: string): VueComponent | undefined {
-  const resultset = findVueItem(['item-results-panel', 'resultset']);
-  if (!itemId) return undefined;
-  return resultset?.$children?.find((child) => child.itemId === itemId);
+  const children = getResultsetChildren();
+  if (!children.length) return undefined;
+  if (!itemId) return children[0];
+
+  return children.find(
+    (child) =>
+      child.itemId === itemId
+      || child.$vnode?.key === itemId
+      || String(child.itemId) === String(itemId),
+  );
+}
+
+function commitPushStatGroup(
+  filterType: 'and' | 'not',
+  filters: SiteFilter[],
+  rowId?: string,
+): boolean {
+  const candidates = [
+    findVueResultItem(rowId),
+    ...getResultsetChildren(),
+    findVueItem(['item-search-panel', 'item-filter-panel']),
+    findVueItem(['item-search-panel']),
+  ].filter((candidate, index, list): candidate is VueComponent => {
+    return !!candidate && list.indexOf(candidate) === index;
+  });
+
+  for (const candidate of candidates) {
+    if (candidate.$store?.commit) {
+      candidate.$store.commit('pushStatGroup', { type: filterType, filters });
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function applyStatToFilterGroup(
+  hash: string,
+  filterType: 'and' | 'not',
+  rowId?: string,
+): boolean {
+  const newFilter = createSiteFilter(hash);
+  if (!newFilter) return false;
+
+  const targetGroup = findStatFilterGroup(filterType);
+
+  if (targetGroup?.selectFilter) {
+    targetGroup.selectFilter(newFilter);
+    return true;
+  }
+
+  if (targetGroup?.filters) {
+    targetGroup.filters.push(newFilter);
+    return true;
+  }
+
+  return commitPushStatGroup(filterType, [newFilter], rowId);
 }
 
 function getItemResultsPanel(): VueComponent | undefined {
@@ -79,6 +137,18 @@ export function isStatInFilterGroups(hash: string, groups?: VueComponent[]): boo
   return ISGs.some((group) => group.filters?.some((filter) => filter.id === hash) ?? false);
 }
 
+export function isStatInGroupsOfType(hash: string, filterType: 'and' | 'not'): boolean {
+  return getItemSearchGroups(filterType).some(
+    (group) => group.filters?.some((filter) => filter.id === hash) ?? false,
+  );
+}
+
+/** Legacy parity: prefer secondary stat group (index !== 0), then primary, then first. */
+export function findStatFilterGroup(filterType: 'and' | 'not'): VueComponent | undefined {
+  const groups = getItemSearchGroups(filterType);
+  return groups.find((g) => g.index !== 0) ?? groups.find((g) => g.index === 0) ?? groups[0];
+}
+
 /** PoE1-style: push into the primary stat-filter group and save. */
 export function addStatToFilterGroup(
   hash: string,
@@ -88,16 +158,10 @@ export function addStatToFilterGroup(
   if (!app) return false;
 
   const filterType = mode === 'exclude' ? 'not' : 'and';
-  const ISGs = getItemSearchGroups(filterType);
-  const targetGroup = ISGs.find((g) => g.index === 0) ?? ISGs[0];
-  if (!targetGroup?.filters) return false;
+  if (isStatInGroupsOfType(hash, filterType)) return true;
 
-  if (targetGroup.filters.some((f) => f.id === hash)) return true;
+  if (!applyStatToFilterGroup(hash, filterType)) return false;
 
-  const newFilter = createSiteFilter(hash);
-  if (!newFilter) return false;
-
-  targetGroup.filters.push(newFilter);
   app.save(true);
   return true;
 }
@@ -112,18 +176,9 @@ export function addStatFromResultRow(
   if (!app) return false;
 
   const filterType = mode === 'include' ? 'and' : 'not';
-  const newFilter = createSiteFilter(hash);
-  if (!newFilter) return false;
+  if (isStatInGroupsOfType(hash, filterType)) return true;
 
-  const ISGs = getItemSearchGroups(filterType);
-  const targetGroup = ISGs.find((g) => g.index !== 0) ?? ISGs[0];
-
-  if (targetGroup?.selectFilter) {
-    targetGroup.selectFilter(newFilter);
-  } else {
-    const vueResult = findVueResultItem(rowId);
-    vueResult?.$store?.commit?.('pushStatGroup', { type: filterType, filters: [newFilter] });
-  }
+  if (!applyStatToFilterGroup(hash, filterType, rowId)) return false;
 
   try {
     const vueResult = findVueResultItem(rowId);

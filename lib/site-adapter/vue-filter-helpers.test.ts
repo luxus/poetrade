@@ -4,9 +4,11 @@ import {
   addStatToFilterGroup,
   applyGlobalPresetViaVue,
   createSiteFilter,
+  findStatFilterGroup,
   getItemSearchGroups,
   getTradeApp,
   isStatInFilterGroups,
+  isStatInGroupsOfType,
   removeStatFromAllGroups,
 } from './vue-filter-helpers';
 import { STAT_HASH_MAP } from './stat-hash-map';
@@ -127,18 +129,24 @@ describe('vue-filter-helpers', () => {
   });
 
   it('addStatToFilterGroup pushes filter and saves', () => {
-    const { save, andFilters0 } = installMockTradeApp();
+    const { save, andFilters1 } = installMockTradeApp();
     expect(addStatToFilterGroup('hash-1', 'include')).toBe(true);
-    expect(andFilters0.some((f) => f.id === 'hash-1')).toBe(true);
+    expect(andFilters1.some((f) => f.id === 'hash-1')).toBe(true);
     expect(save).toHaveBeenCalledWith(true);
   });
 
   it('addStatToFilterGroup is idempotent for existing hash', () => {
-    const { save, andFilters0 } = installMockTradeApp();
-    andFilters0.push({ id: 'dup', value: {}, disabled: false });
+    const { save, andFilters1 } = installMockTradeApp();
+    andFilters1.push({ id: 'dup', value: {}, disabled: false });
     expect(addStatToFilterGroup('dup', 'include')).toBe(true);
-    expect(andFilters0.filter((f) => f.id === 'dup')).toHaveLength(1);
+    expect(andFilters1.filter((f) => f.id === 'dup')).toHaveLength(1);
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it('findStatFilterGroup prefers index !== 0', () => {
+    installMockTradeApp();
+    expect(findStatFilterGroup('and')?.index).toBe(1);
+    expect(findStatFilterGroup('not')?.index).toBe(1);
   });
 
   it('addStatFromResultRow uses selectFilter and triggers search', () => {
@@ -147,6 +155,82 @@ describe('vue-filter-helpers', () => {
     expect(andGroup1.selectFilter).toHaveBeenCalled();
     expect(save).toHaveBeenCalledWith(true);
     expect(search).toHaveBeenCalled();
+  });
+
+  it('addStatFromResultRow adds exclude stat to not group', () => {
+    const { save, search, notGroup1 } = installMockTradeApp();
+    expect(addStatFromResultRow('exclude-stat', 'exclude', 'row-1')).toBe(true);
+    expect(notGroup1.selectFilter).toHaveBeenCalled();
+    expect(save).toHaveBeenCalledWith(true);
+    expect(search).toHaveBeenCalled();
+  });
+
+  it('addStatFromResultRow exclude creates not group via pushStatGroup when missing', () => {
+    const save = vi.fn();
+    const search = vi.fn();
+    const commit = vi.fn();
+    const andFilters1: Array<{ id: string; value: Record<string, unknown>; disabled: boolean }> = [];
+    const andGroup1 = {
+      $vnode: tag('stat-filter-group'),
+      group: { type: 'and' },
+      index: 1,
+      filters: andFilters1,
+      selectFilter: vi.fn(),
+    };
+    const filterPanel = {
+      $vnode: tag('item-filter-panel'),
+      $children: [andGroup1],
+    };
+    const searchPanel = {
+      $vnode: tag('item-search-panel'),
+      $children: [filterPanel],
+    };
+    const resultsPanel = {
+      $vnode: tag('item-results-panel'),
+      $children: [
+        {
+          $vnode: tag('resultset'),
+          $children: [
+            {
+              itemId: 'row-9',
+              $store: { commit },
+              translate: (key: string) => key,
+            },
+          ],
+        },
+      ],
+      search,
+    };
+    (globalThis as MockWindow).app = {
+      save,
+      $refs: { toastr: { Add: vi.fn() } },
+      $children: [searchPanel, resultsPanel],
+    };
+
+    expect(addStatFromResultRow('exclude-new', 'exclude', 'row-9')).toBe(true);
+    expect(commit).toHaveBeenCalledWith('pushStatGroup', {
+      type: 'not',
+      filters: [{ id: 'exclude-new', value: {}, disabled: false }],
+    });
+    expect(save).toHaveBeenCalledWith(true);
+    expect(search).toHaveBeenCalled();
+  });
+
+  it('addStatFromResultRow is idempotent when stat already in target group', () => {
+    const { save, search, andFilters1 } = installMockTradeApp();
+    andFilters1.push({ id: 'dup-stat', value: {}, disabled: false });
+    expect(addStatFromResultRow('dup-stat', 'include', 'row-1')).toBe(true);
+    expect(save).not.toHaveBeenCalled();
+    expect(search).not.toHaveBeenCalled();
+  });
+
+  it('isStatInGroupsOfType checks only matching filter type', () => {
+    const { andFilters0, notFilters } = installMockTradeApp();
+    andFilters0.push({ id: 'and-only', value: {}, disabled: false });
+    notFilters.push({ id: 'not-only', value: {}, disabled: false });
+    expect(isStatInGroupsOfType('and-only', 'and')).toBe(true);
+    expect(isStatInGroupsOfType('and-only', 'not')).toBe(false);
+    expect(isStatInGroupsOfType('not-only', 'not')).toBe(true);
   });
 
   it('removeStatFromAllGroups removes across groups', () => {

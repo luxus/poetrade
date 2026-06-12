@@ -11,9 +11,15 @@ function mockMod(opts: {
   rowid?: string;
   rowDataId?: string;
 }): HTMLElement {
+  const classes = new Set<string>();
   const mod = {
     dataset: { hash: opts.hash, rowid: opts.rowid } as Record<string, string | undefined>,
     style: {} as Record<string, string>,
+    classList: {
+      add: (...names: string[]) => names.forEach((n) => classes.add(n)),
+      contains: (name: string) => classes.has(name),
+      remove: (...names: string[]) => names.forEach((n) => classes.delete(n)),
+    },
     querySelector: (sel: string) => {
       if (sel === '.lc.s' && opts.field) {
         return {
@@ -27,8 +33,12 @@ function mockMod(opts: {
     },
     querySelectorAll: () => ({ forEach: () => {} }),
     closest: (sel: string) => {
-      if (sel === '[data-id]' && opts.rowDataId) {
-        return { getAttribute: (name: string) => (name === 'data-id' ? opts.rowDataId! : null), id: '' };
+      if (opts.rowDataId && (sel.includes('[data-id]') || sel.includes('.row'))) {
+        return {
+          getAttribute: (name: string) => (name === 'data-id' ? opts.rowDataId! : null),
+          dataset: { id: opts.rowDataId },
+          id: '',
+        };
       }
       return null;
     },
@@ -53,14 +63,34 @@ describe('mod-decoration', () => {
     expect(mod.dataset.rowid).toBe('row-42');
   });
 
+  it('attachFilterButtonsToMod hides minus when stat is already in not filters', () => {
+    const mod = mockMod({ hash: 'hash-1', rowid: 'row-9' });
+    mod.classList.add('finer-filterable', 'finer-in-not', 'finer-filtered');
+    const removed: string[] = [];
+    const btns = {
+      id: 'btns-finer',
+      classList: { add: () => {} },
+      setAttribute: () => {},
+      getAttribute: () => null,
+      querySelector: (sel: string) => ({
+        remove: () => removed.push(sel),
+      }),
+    } as unknown as HTMLElement;
+
+    attachFilterButtonsToMod(mod, btns);
+    expect(removed).toContain('[data-action="rmv-filter"]');
+  });
+
   it('attachFilterButtonsToMod copies hash and rowid onto the button group', () => {
     const mod = mockMod({ hash: 'hash-1', rowid: 'row-9' });
+    mod.classList.add('finer-filterable');
     const attrs: Record<string, string> = {};
     const btns = {
       id: 'btns-finer',
       classList: { add: () => {} },
       setAttribute: (name: string, value: string) => { attrs[name] = value; },
       getAttribute: (name: string) => attrs[name] ?? null,
+      querySelector: (sel: string) => (sel.includes('add-filter') || sel.includes('rmv-filter') || sel === '[data-action]' ? {} : null),
     } as unknown as HTMLElement;
 
     attachFilterButtonsToMod(mod, btns);

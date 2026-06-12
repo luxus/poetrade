@@ -7,7 +7,7 @@ import {
   applyGlobalPresetViaVue,
   getItemSearchGroups,
   getTradeApp,
-  isStatInFilterGroups,
+  isStatInGroupsOfType,
   removeStatFromAllGroups,
 } from './vue-filter-helpers';
 
@@ -45,12 +45,20 @@ export class PoE2SiteStrategy implements ISiteStrategy {
       return;
     }
 
-    const isFiltered = this.hasSiteApp()
-      ? isStatInFilterGroups(hash)
-      : this.getScrapedActiveFilters().some((f) => f.id === hash);
+    if (!this.hasSiteApp()) {
+      const scraped = this.getScrapedActiveFilters().some((f) => f.id === hash);
+      mod.classList.remove('finer-filtered', 'finer-filterable', 'finer-in-and', 'finer-in-not');
+      mod.classList.add(scraped ? 'finer-filtered' : 'finer-filterable');
+      return;
+    }
 
-    mod.classList.remove('finer-filtered', 'finer-filterable');
-    mod.classList.add(isFiltered ? 'finer-filtered' : 'finer-filterable');
+    const inAnd = isStatInGroupsOfType(hash, 'and');
+    const inNot = isStatInGroupsOfType(hash, 'not');
+    mod.classList.remove('finer-filtered', 'finer-filterable', 'finer-in-and', 'finer-in-not');
+    if (inAnd) mod.classList.add('finer-in-and');
+    if (inNot) mod.classList.add('finer-in-not');
+    if (inAnd || inNot) mod.classList.add('finer-filtered');
+    if (!inAnd || !inNot) mod.classList.add('finer-filterable');
   }
 
   prepareAndDecorateModForFinerButtons(mod: HTMLElement): void {

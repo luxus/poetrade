@@ -29,8 +29,8 @@ export const initFilterPanel = () => {
   const filteredOverlay = () => h(`<div class="finer-filtered-overlay"></div>`);
   const buttonsTemplate = () => h(`
     <span id="btns-finer">
-      <span class="btn-finer rm"  data-action="rmv-filter"  title="remove this mod from your search results">-</span>
-      <span class="btn-finer add" data-action="add-filter"  title="add this mod to your search filters">+</span>
+      <span class="btn-finer rm"  data-action="rmv-filter"  title="add this mod as a NOT filter (exclude from results)">-</span>
+      <span class="btn-finer add" data-action="add-filter"  title="add this mod as an AND filter (require in results)">+</span>
     </span>`);
 
   // Preset list lives in FinerFilters.svelte (the UI side). The global actions are delegated via events to adapter.
@@ -151,18 +151,54 @@ export const initFilterPanel = () => {
     );
   };
 
+  const findModFromButton = (btn: HTMLElement): HTMLElement | null => {
+    const btns = btn.closest('#btns-finer');
+    return (
+      btns?.closest(poeTradeAdapter.getModSelectors()) as HTMLElement | null
+      || btn.closest(poeTradeAdapter.getModSelectors()) as HTMLElement | null
+    );
+  };
+
+  const refreshModAfterFilterClick = (mod: HTMLElement) => {
+    poeTradeAdapter.prepareAndDecorateModForFinerButtons(mod);
+    mod.querySelector('#btns-finer')?.remove();
+    mod.querySelector('.finer-filtered-overlay')?.remove();
+
+    if (mod.classList.contains('finer-filtered')) {
+      const o = filteredOverlay();
+      if (o) mod.appendChild(o);
+      return;
+    }
+
+    const btns = buttonsTemplate();
+    if (btns) poeTradeAdapter.attachFilterButtons(mod, btns);
+  };
+
   on('click', '[data-action="add-filter"]', async (_e, el) => {
+    const mod = findModFromButton(el);
+    if (mod?.classList.contains('finer-in-and')) return;
+
     const btns = el.closest('#btns-finer');
     const hash = resolveStatHash(el);
     const rowId = btns?.getAttribute('data-rowid') || undefined;
-    if (hash) await poeTradeAdapter.addStatFilter(hash, 'include', rowId);
+    if (!hash) return;
+
+    const ok = await poeTradeAdapter.addStatFilter(hash, 'include', rowId);
+    if (ok && mod) refreshModAfterFilterClick(mod);
   });
 
   on('click', '[data-action="rmv-filter"]', async (_e, el) => {
+    const mod = findModFromButton(el);
+    if (mod?.classList.contains('finer-in-not')) return;
+
     const btns = el.closest('#btns-finer');
     const hash = resolveStatHash(el);
     const rowId = btns?.getAttribute('data-rowid') || undefined;
-    if (hash) await poeTradeAdapter.addStatFilter(hash, 'exclude', rowId);
+    if (!hash) return;
+
+    // Minus adds to the site's NOT filter group — it does not remove existing filters.
+    const ok = await poeTradeAdapter.addStatFilter(hash, 'exclude', rowId);
+    if (ok && mod) refreshModAfterFilterClick(mod);
   });
 
   // ---------- small quality-of-life: auto ~ prefix on native search fields ----------

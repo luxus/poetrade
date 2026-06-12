@@ -11,8 +11,16 @@ export function extractHashFromMod(mod: HTMLElement): string {
 }
 
 export function getRowIdFromMod(mod: HTMLElement): string {
-  const row = mod.closest('[data-id]') as HTMLElement | null;
-  return row?.getAttribute('data-id') || row?.id || mod.dataset.rowid || '';
+  const row = mod.closest(
+    '[data-id], .result-item, .row, .resultset > .row',
+  ) as HTMLElement | null;
+  return (
+    row?.getAttribute('data-id')
+    || row?.dataset?.id
+    || row?.id
+    || mod.dataset.rowid
+    || ''
+  );
 }
 
 export function prepareModForButtons(mod: HTMLElement): void {
@@ -28,6 +36,11 @@ export function attachFilterButtonsToMod(mod: HTMLElement, buttonsElement: HTMLE
     while (wrapper.firstChild) mod.insertBefore(wrapper.firstChild, wrapper);
     wrapper.remove();
   });
+
+  if (!mod.classList.contains('finer-filterable')) {
+    mod.querySelector('#btns-finer')?.remove();
+    return;
+  }
   if (mod.querySelector('#btns-finer')) return;
 
   mod.style.overflow = 'visible';
@@ -36,6 +49,14 @@ export function attachFilterButtonsToMod(mod: HTMLElement, buttonsElement: HTMLE
   if (hash) buttonsElement.setAttribute('data-hash', hash);
   const rowId = mod.dataset.rowid;
   if (rowId) buttonsElement.setAttribute('data-rowid', rowId);
+
+  if (mod.classList.contains('finer-in-and')) {
+    buttonsElement.querySelector('[data-action="add-filter"]')?.remove();
+  }
+  if (mod.classList.contains('finer-in-not')) {
+    buttonsElement.querySelector('[data-action="rmv-filter"]')?.remove();
+  }
+  if (!buttonsElement.querySelector('[data-action]')) return;
 
   const host = mod.querySelector('.lc.r.su, .lc.r.pr, .lc.r') as HTMLElement | null;
   const target = host || mod;
