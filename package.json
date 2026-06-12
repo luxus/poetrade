@@ -24,6 +24,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -49,6 +51,7 @@
     "sass-embedded": "^1.99.0",
     "svelte-eslint-parser": "^1.8.0",
     "typescript": "5.3.3",
+    "vitest": "^4.1.8",
     "wxt": "^0.20.20"
   },
   "overrides": {
