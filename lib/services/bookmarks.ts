@@ -64,7 +64,7 @@ export class BookmarksService {
 
       const foldersChange = changes[FOLDERS_KEY];
       if (foldersChange) {
-        const folders = this.normalizeFolders(foldersChange.newValue?.value);
+        const folders = this.normalizeFolders(this.readStorageSyncValue(foldersChange.newValue));
         this.foldersStore.set(folders);
         this.notifyChange({ foldersChanged: true });
       }
@@ -74,7 +74,7 @@ export class BookmarksService {
         if (!key.startsWith(tradesPrefix)) continue;
 
         const folderId = key.slice(tradesPrefix.length);
-        const trades = this.normalizeTrades(change.newValue?.value);
+        const trades = this.normalizeTrades(this.readStorageSyncValue(change.newValue));
         this.tradesCache.set(folderId, trades);
         this.tradesRequests.delete(folderId);
         this.notifyChange({ tradesChanged: true, folderId });
@@ -87,6 +87,13 @@ export class BookmarksService {
   async fetchFolders(): Promise<BookmarksFolderStruct[]> {
     const folders = await storageService.getValue<Partial<BookmarksFolderStruct>[]>(FOLDERS_KEY);
     return this.normalizeFolders(folders);
+  }
+
+  private readStorageSyncValue<T>(raw: unknown): T | undefined {
+    if (raw && typeof raw === "object" && "value" in raw) {
+      return (raw as { value: T }).value;
+    }
+    return raw as T | undefined;
   }
 
   private normalizeFolders(folders: Partial<BookmarksFolderStruct>[] | null | undefined): BookmarksFolderStruct[] {

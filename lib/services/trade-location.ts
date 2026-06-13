@@ -24,8 +24,8 @@ export class TradeLocationService {
   private activeTabTrackingStarted = false;
   private focusHandler: (() => void) | null = null;
   private blurHandler: (() => void) | null = null;
-  private activeTabUpdatedHandler: ((tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void) | null = null;
-  private activeTabActivatedHandler: ((activeInfo: chrome.tabs.TabActiveInfo) => void) | null = null;
+  private activeTabUpdatedHandler: ((tabId: number, changeInfo: chrome.tabs.OnUpdatedInfo, tab: chrome.tabs.Tab) => void) | null = null;
+  private activeTabActivatedHandler: ((activeInfo: chrome.tabs.OnActivatedInfo) => void) | null = null;
   
   // Svelte store for reactivity
   public locationStore = writable<ExactTradeLocationStruct>(this.parseCurrentLocation());

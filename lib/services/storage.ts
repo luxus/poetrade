@@ -49,7 +49,7 @@ export class StorageService {
     }
     try {
       const result = await chrome.storage.local.get([key]);
-      return result[key] || null;
+      return (result[key] as StoragePayload | undefined) ?? null;
     } catch (error) {
       if (!isExtensionContextInvalidatedError(error)) {
         console.warn("Storage read failed", error);
